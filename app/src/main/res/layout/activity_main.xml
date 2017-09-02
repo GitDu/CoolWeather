@@ -5,9 +5,15 @@
     android:layout_height="match_parent"
     tools:context="com.dwj.coolweather.MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!" />
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <fragment
+            android:id="@+id/areaFragment"
+            android:name="com.dwj.coolweather.AreaFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
 
 </RelativeLayout>
