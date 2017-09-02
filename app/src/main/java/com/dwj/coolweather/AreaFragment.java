@@ -156,6 +156,7 @@ public class AreaFragment extends Fragment {
 
     private void queryProvince() {
         mBack.setVisibility(View.GONE);
+        mText.setText(R.string.china);
         mProvincesList = DataSupport.findAll(Province.class);
         if (mProvincesList.size() > 0) {
             //直接更新数据
