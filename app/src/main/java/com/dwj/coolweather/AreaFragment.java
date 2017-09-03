@@ -1,6 +1,7 @@
 package com.dwj.coolweather;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -30,11 +31,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.Response;
 
 /**
  * Created by duWenJun on 17-9-2.
  * 个人认证key: a51a0df067ff48fd98aa27b1324594e7
+ *
+ * key 2 bc0418b57b2d4918819d3974ac1285d9
  */
 
 public class AreaFragment extends Fragment {
@@ -94,6 +98,16 @@ public class AreaFragment extends Fragment {
                         mQueryNumber = QUERY_COUNTY;
                         mSelectCity = mCityList.get(i);
                         queryCounty();
+                        break;
+                    case QUERY_COUNTY:
+                        County selectCounty = mCountyList.get(i);
+                        Log.d(TAG, "onItemClick: " + selectCounty.getWeatherId());
+                        String weatherUrl = "http://guolin.tech/api/weather?cityid=" +
+                                selectCounty.getWeatherId() + "&key=a51a0df067ff48fd98aa27b1324594e7";
+                        Intent intent = new Intent(mContext, WeatherActivity.class);
+                        intent.putExtra("weatherUrl", weatherUrl);
+                        mContext.startActivity(intent);
+                        mContext.finish();
                         break;
                 }
             }
