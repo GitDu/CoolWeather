@@ -1,9 +1,13 @@
 package com.dwj.coolweather;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,6 +27,7 @@ import com.dwj.coolweather.util.HttpUtil;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -33,6 +38,7 @@ public class WeatherActivity extends AppCompatActivity {
     private static final String TAG = "WeatherActivity";
     private static final String BING_ICON = "http://guolin.tech/api/bing_pic";
     private static final String BING = "bing";
+    public static final String LAST_COUNTY_NAME = "lastCountyName";
     private String mWeatherUrl;
     private TextView mCountyName;
     private TextView mUpdateDate;
@@ -46,8 +52,9 @@ public class WeatherActivity extends AppCompatActivity {
     private TextView mCom_suggestion;
     private TextView mCw_suggestion;
     private SharedPreferences mDefaultPreferences;
-    private String mTitleName;
     private ImageView mBackground;
+    private DrawerLayout mDraw;
+    private ImageView mImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +65,39 @@ public class WeatherActivity extends AppCompatActivity {
         initView();
         initData();
         initBackground();
+        mImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mDraw.openDrawer(GravityCompat.START);
+            }
+        });
+    }
+
+    public DrawerLayout getDrawLayout() {
+        if (mDraw != null) {
+            return mDraw;
+        }
+        return null;
+    }
+
+    //仅仅更新数据
+    @Override
+    protected void onNewIntent(Intent intent) {
+        setIntent(intent);
+        if (mForeCastLayout != null) {
+            int childCount = mForeCastLayout.getChildCount();
+            Log.d(TAG, "onNewIntent: " + childCount);
+            for (int count = mForeCastLayout.getChildCount(); count > 0; count--) {
+                View childAt = mForeCastLayout.getChildAt(count);
+                if (childAt != null && childAt instanceof LinearLayout) {
+                    Log.d(TAG, "onNewIntent: " + childAt.getClass().getSimpleName());
+                    mForeCastLayout.removeView(childAt);
+                }
+            }
+        }
+        mWeatherUrl = getIntent().getStringExtra("weatherUrl");
+        initData();
+        super.onNewIntent(intent);
     }
 
     private void fitStatusBar() {
@@ -103,14 +143,16 @@ public class WeatherActivity extends AppCompatActivity {
     }
 
     private void initView() {
+        mDraw = ((DrawerLayout) findViewById(R.id.draw_layout));
+        mImage = ((ImageView) findViewById(R.id.home));
         mBackground = ((ImageView) findViewById(R.id.bing_background));
         mCountyName = ((TextView) findViewById(R.id.county_name));
         mUpdateDate = ((TextView) findViewById(R.id.update_time));
         mTemNow = ((TextView) findViewById(R.id.tem_now));
         mWeatherNow = ((TextView) findViewById(R.id.weather_now));
-        mForeCastLayout = ((LinearLayout) findViewById(R.id.foreCast));
         mAirState = ((TextView) findViewById(R.id.air_state));
         mAqiNumber = ((TextView) findViewById(R.id.aqi_number));
+        mForeCastLayout = ((LinearLayout) findViewById(R.id.foreCast));
         mPmNumber = ((TextView) findViewById(R.id.pm_number));
         mAir_suggestion = ((TextView) findViewById(R.id.air_suggestion));
         mCom_suggestion = ((TextView) findViewById(R.id.comf_suggestion));
@@ -121,6 +163,7 @@ public class WeatherActivity extends AppCompatActivity {
     private void initData() {
         String string = mDefaultPreferences.getString(MainActivity.WEATHER_DATA, null);
         if (string == null || string.length() == 0) {
+            //更新的时候直接再次初始化这个控件
             queryDataFromService();
         } else {
             //直接解析生成weather对象
@@ -161,8 +204,9 @@ public class WeatherActivity extends AppCompatActivity {
     }
 
     private void updateData(Weather weather) {
-        mTitleName = weather.getBasic().getCity();
-        mCountyName.setText(mTitleName);
+        String titleName = weather.getBasic().getCity();
+        mDefaultPreferences.edit().putString(LAST_COUNTY_NAME, titleName).apply();
+        mCountyName.setText(titleName);
         String updateTime = weather.getBasic().getUpdate().getLoc().split(" ")[1];
         mUpdateDate.setText(updateTime);
 
@@ -180,10 +224,14 @@ public class WeatherActivity extends AppCompatActivity {
                 TextView high_tem = (TextView) inflate.findViewById(R.id.high_tem);
                 TextView low_tem = (TextView) inflate.findViewById(R.id.low_tem);
                 String dataNumber = dailyForecastBean.getDate();
-                SimpleDateFormat myFmt2 = new SimpleDateFormat("yyyy-MM-dd");
+                SimpleDateFormat myFmt2 = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA);
                 String chineseWeek = TimeUtils.getChineseWeek(dataNumber, myFmt2);
                 date.setText(chineseWeek);
-                wea.setText(dailyForecastBean.getCond().getTxt_d());
+                String txt_d = dailyForecastBean.getCond().getTxt_d();
+                if (txt_d.contains("/")) {
+                    txt_d = txt_d.split("/")[0];
+                }
+                wea.setText(txt_d);
                 String low = dailyForecastBean.getTmp().getMin() + getString(R.string.tem);
                 String high = dailyForecastBean.getTmp().getMax() + getString(R.string.tem);
                 high_tem.setText(high);

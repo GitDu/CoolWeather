@@ -2,17 +2,19 @@ package com.dwj.coolweather;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.GravityCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -31,13 +33,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.Response;
 
 /**
  * Created by duWenJun on 17-9-2.
  * 个人认证key: a51a0df067ff48fd98aa27b1324594e7
- *
+ * <p>
  * key 2 bc0418b57b2d4918819d3974ac1285d9
  */
 
@@ -104,10 +105,25 @@ public class AreaFragment extends Fragment {
                         Log.d(TAG, "onItemClick: " + selectCounty.getWeatherId());
                         String weatherUrl = "http://guolin.tech/api/weather?cityid=" +
                                 selectCounty.getWeatherId() + "&key=a51a0df067ff48fd98aa27b1324594e7";
+                        /*
+                         *如果是从MainActivity过来 直接跳转到weatherActivity
+                         * 如果是附在weatherActivity上 则更新数据 不用再启动activity.
+                         */
                         Intent intent = new Intent(mContext, WeatherActivity.class);
                         intent.putExtra("weatherUrl", weatherUrl);
-                        mContext.startActivity(intent);
-                        mContext.finish();
+                        if (mContext instanceof WeatherActivity) {
+                            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+                            String lastCounty = sharedPreferences.getString(WeatherActivity.LAST_COUNTY_NAME, null);
+                            if (lastCounty != null && lastCounty.length() > 0 && !lastCounty.equals(selectCounty.getCountyName())) {
+                                sharedPreferences.edit().putString(MainActivity.WEATHER_DATA, null).apply();
+                                mContext.startActivity(intent);
+                            }
+                            ((WeatherActivity) mContext).getDrawLayout().closeDrawer(GravityCompat.START);
+                        } else if (mContext instanceof MainActivity) {
+                            mContext.startActivity(intent);
+                            mContext.finish();
+                        }
+
                         break;
                 }
             }

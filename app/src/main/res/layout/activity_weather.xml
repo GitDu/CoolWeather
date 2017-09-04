@@ -1,79 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/draw_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.dwj.coolweather.WeatherActivity">
 
-    <ImageView
-        android:scaleType="fitXY"
-        android:id="@+id/bing_background"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-
-    <ScrollView
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout
+        <ImageView
+            android:id="@+id/bing_background"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fitsSystemWindows="true"
-            android:orientation="vertical">
+            android:layout_height="match_parent"
+            android:scaleType="fitXY" />
 
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-            <RelativeLayout
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize">
-
-                <TextView
-                    android:id="@+id/county_name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_centerInParent="true"
-                    android:gravity="center"
-                    android:textColor="@color/textColor"
-                    android:textSize="25sp" />
-
-                <TextView
-                    android:id="@+id/update_time"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentBottom="true"
-                    android:layout_alignParentEnd="true"
-                    android:layout_margin="10dp"
-                    android:textColor="@color/textColor"
-                    android:textSize="20sp" />
-            </RelativeLayout>
-
-            <include layout="@layout/weather_now" />
-            <ImageView
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:background="@color/textColor" />
+                android:layout_height="wrap_content"
+                android:fitsSystemWindows="true"
+                android:orientation="vertical">
 
 
-            <include layout="@layout/daily_forecast" />
-            <ImageView
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:background="@color/textColor" />
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="?attr/actionBarSize">
 
-            <include layout="@layout/air_quality" />
+                    <ImageView
+                        android:id="@+id/home"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="10dp"
+                        android:src="@drawable/home" />
 
-            <ImageView
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:background="@color/textColor" />
-            <include layout="@layout/suggestion" />
-        </LinearLayout>
-    </ScrollView>
+                    <TextView
+                        android:id="@+id/county_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_centerInParent="true"
+                        android:gravity="center"
+                        android:textColor="@color/textColor"
+                        android:textSize="25sp" />
 
-</FrameLayout>
+                    <TextView
+                        android:id="@+id/update_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentBottom="true"
+                        android:layout_alignParentEnd="true"
+                        android:layout_margin="10dp"
+                        android:textColor="@color/textColor"
+                        android:textSize="20sp" />
+                </RelativeLayout>
+
+                <include layout="@layout/weather_now" />
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_marginStart="10dp"
+                    android:background="@color/textColor" />
+
+
+                <include layout="@layout/daily_forecast" />
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_marginStart="10dp"
+                    android:background="@color/textColor" />
+
+                <include layout="@layout/air_quality" />
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_marginStart="10dp"
+                    android:background="@color/textColor" />
+
+                <include layout="@layout/suggestion" />
+            </LinearLayout>
+        </ScrollView>
+    </FrameLayout>
+
+    <fragment
+        android:id="@+id/weather_fragment"
+        android:name="com.dwj.coolweather.AreaFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="start" />
+</android.support.v4.widget.DrawerLayout>
