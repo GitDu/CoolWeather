@@ -8,6 +8,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -20,12 +21,16 @@ import android.widget.Toast;
 
 import com.blankj.utilcode.util.TimeUtils;
 import com.bumptech.glide.Glide;
+import com.dwj.coolweather.db.County;
 import com.dwj.coolweather.gson.Weather;
 import com.dwj.coolweather.util.DataUtil;
 import com.dwj.coolweather.util.HttpUtil;
 
+import org.litepal.crud.DataSupport;
+
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -39,6 +44,7 @@ public class WeatherActivity extends AppCompatActivity {
     private static final String BING_ICON = "http://guolin.tech/api/bing_pic";
     private static final String BING = "bing";
     public static final String LAST_COUNTY_NAME = "lastCountyName";
+    private boolean mInflate = false;
     private String mWeatherUrl;
     private TextView mCountyName;
     private TextView mUpdateDate;
@@ -55,6 +61,8 @@ public class WeatherActivity extends AppCompatActivity {
     private ImageView mBackground;
     private DrawerLayout mDraw;
     private ImageView mImage;
+    private SwipeRefreshLayout mSwap;
+    private ArrayList<ViewHolder> holders = new ArrayList<ViewHolder>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,21 +92,25 @@ public class WeatherActivity extends AppCompatActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         setIntent(intent);
-        if (mForeCastLayout != null) {
-            int childCount = mForeCastLayout.getChildCount();
-            Log.d(TAG, "onNewIntent: " + childCount);
-            for (int count = mForeCastLayout.getChildCount(); count > 0; count--) {
-                View childAt = mForeCastLayout.getChildAt(count);
-                if (childAt != null && childAt instanceof LinearLayout) {
-                    Log.d(TAG, "onNewIntent: " + childAt.getClass().getSimpleName());
-                    mForeCastLayout.removeView(childAt);
-                }
-            }
-        }
+        //从侧划页跳转过来
         mWeatherUrl = getIntent().getStringExtra("weatherUrl");
         initData();
         super.onNewIntent(intent);
     }
+
+//    private void refreshViews() {
+//        if (mForeCastLayout != null) {
+//            int childCount = mForeCastLayout.getChildCount();
+//            Log.d(TAG, "onNewIntent: " + childCount);
+//            for (int count = mForeCastLayout.getChildCount(); count > 0; count--) {
+//                View childAt = mForeCastLayout.getChildAt(count);
+//                if (childAt != null && childAt instanceof LinearLayout) {
+//                    Log.d(TAG, "onNewIntent: " + childAt.getClass().getSimpleName());
+//                    mForeCastLayout.removeView(childAt);
+//                }
+//            }
+//        }
+//    }
 
     private void fitStatusBar() {
         //在5.0系统上的应用
@@ -123,7 +135,13 @@ public class WeatherActivity extends AppCompatActivity {
         HttpUtil.handleHttpRequest(BING_ICON, new okhttp3.Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Toast.makeText(WeatherActivity.this, " 必应背景图片获取失败", Toast.LENGTH_SHORT).show();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(WeatherActivity.this, " 必应背景图片获取失败", Toast.LENGTH_SHORT).show();
+                        mSwap.setRefreshing(false);
+                    }
+                });
             }
 
             @Override
@@ -135,6 +153,7 @@ public class WeatherActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         Glide.with(WeatherActivity.this).load(icon_path).into(mBackground);
+                        mSwap.setRefreshing(false);
                     }
                 });
             }
@@ -157,6 +176,33 @@ public class WeatherActivity extends AppCompatActivity {
         mAir_suggestion = ((TextView) findViewById(R.id.air_suggestion));
         mCom_suggestion = ((TextView) findViewById(R.id.comf_suggestion));
         mCw_suggestion = ((TextView) findViewById(R.id.cw_suggestion));
+        mSwap = ((SwipeRefreshLayout) findViewById(R.id.swipe_layout));
+        mSwap.setColorSchemeColors(getResources().getColor(R.color.colorPrimary));
+        //增加手动更新的功能 再次访问服务器
+        mSwap.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                if (mWeatherUrl == null) {
+                    //其中有view是动态加载的 需要再次清除view
+                    String string = mDefaultPreferences.getString(MainActivity.WEATHER_DATA, null);
+                    Weather weather = DataUtil.handleWeatherData(string);
+                    if (weather != null) {
+                        Weather.BasicBean basic = weather.getBasic();
+                        if (basic != null) {
+                            String city = basic.getCity();
+                            List<County> counties = DataSupport.where("countyName= ?", city).find(County.class);
+                            mWeatherUrl = "http://guolin.tech/api/weather?cityid=" +
+                                    counties.get(0).getWeatherId() + "&key=a51a0df067ff48fd98aa27b1324594e7";
+
+                        }
+                    }
+                }
+                //访问网络请求天气数据
+                queryDataFromService();
+                //访问必应图片
+                loadIconFromService();
+            }
+        });
         mDefaultPreferences = PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this);
     }
 
@@ -181,6 +227,7 @@ public class WeatherActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         Toast.makeText(WeatherActivity.this, " 天气数据网络请求失败 ", Toast.LENGTH_SHORT).show();
+                        mSwap.setRefreshing(false);
                         Log.d(TAG, "run: fail ");
                     }
                 });
@@ -196,6 +243,7 @@ public class WeatherActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             updateData(weather);
+                            mSwap.setRefreshing(false);
                         }
                     });
                 }
@@ -204,40 +252,57 @@ public class WeatherActivity extends AppCompatActivity {
     }
 
     private void updateData(Weather weather) {
-        String titleName = weather.getBasic().getCity();
-        mDefaultPreferences.edit().putString(LAST_COUNTY_NAME, titleName).apply();
-        mCountyName.setText(titleName);
-        String updateTime = weather.getBasic().getUpdate().getLoc().split(" ")[1];
-        mUpdateDate.setText(updateTime);
+        Weather.BasicBean basic = weather.getBasic();
+        if (basic != null) {
+            String titleName = basic.getCity();
+            mDefaultPreferences.edit().putString(LAST_COUNTY_NAME, titleName).apply();
+            mCountyName.setText(titleName);
+            String updateTime = basic.getUpdate().getLoc().split(" ")[1];
+            mUpdateDate.setText(updateTime);
+        }
 
-        String weather_now = weather.getNow().getCond().getTxt();
-        String tmp = weather.getNow().getTmp() + getString(R.string.tem);
-        mTemNow.setText(tmp);
-        mWeatherNow.setText(weather_now);
+        Weather.NowBean now = weather.getNow();
+        if (now != null) {
+            String weather_now = now.getCond().getTxt();
+            String tmp = now.getTmp() + getString(R.string.tem);
+            mTemNow.setText(tmp);
+            mWeatherNow.setText(weather_now);
+        }
 
         List<Weather.DailyForecastBean> daily_forecast = weather.getDaily_forecast();
         if (daily_forecast != null && daily_forecast.size() > 0) {
+            int index = 0;
             for (Weather.DailyForecastBean dailyForecastBean : daily_forecast) {
-                View inflate = LayoutInflater.from(WeatherActivity.this).inflate(R.layout.froecast_item, null);
-                TextView date = (TextView) inflate.findViewById(R.id.date);
-                TextView wea = (TextView) inflate.findViewById(R.id.weather);
-                TextView high_tem = (TextView) inflate.findViewById(R.id.high_tem);
-                TextView low_tem = (TextView) inflate.findViewById(R.id.low_tem);
                 String dataNumber = dailyForecastBean.getDate();
                 SimpleDateFormat myFmt2 = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA);
                 String chineseWeek = TimeUtils.getChineseWeek(dataNumber, myFmt2);
-                date.setText(chineseWeek);
                 String txt_d = dailyForecastBean.getCond().getTxt_d();
                 if (txt_d.contains("/")) {
                     txt_d = txt_d.split("/")[0];
                 }
-                wea.setText(txt_d);
                 String low = dailyForecastBean.getTmp().getMin() + getString(R.string.tem);
                 String high = dailyForecastBean.getTmp().getMax() + getString(R.string.tem);
-                high_tem.setText(high);
-                low_tem.setText(low);
-                mForeCastLayout.addView(inflate);
+                //采用listView的缓存机制 只是缓存控件的引用 更新数据的时候只是更新控件内容
+                //不是暴力的删掉控件再加载 提供用户体验
+                ViewHolder viewHolder = null;
+                if (!mInflate) {
+                    viewHolder = new ViewHolder();
+                    View inflate = LayoutInflater.from(WeatherActivity.this).inflate(R.layout.froecast_item, mForeCastLayout, false);
+                    viewHolder.date = (TextView) inflate.findViewById(R.id.date);
+                    viewHolder.wea = (TextView) inflate.findViewById(R.id.weather);
+                    viewHolder.high_tem = (TextView) inflate.findViewById(R.id.high_tem);
+                    viewHolder.low_tem = (TextView) inflate.findViewById(R.id.low_tem);
+                    holders.add(viewHolder);
+                    mForeCastLayout.addView(inflate);
+                } else {
+                    viewHolder = holders.get(index++);
+                }
+                viewHolder.date.setText(chineseWeek);
+                viewHolder.wea.setText(txt_d);
+                viewHolder.high_tem.setText(high);
+                viewHolder.low_tem.setText(low);
             }
+            mInflate = true;
         }
 
         Weather.AqiBean aqi = weather.getAqi();
@@ -253,5 +318,12 @@ public class WeatherActivity extends AppCompatActivity {
             mCom_suggestion.setText("舒适指数: " + suggestion.getComf().getTxt());
             mCw_suggestion.setText("洗车指数: " + suggestion.getCw().getTxt());
         }
+    }
+
+    private static class ViewHolder {
+        TextView date;
+        TextView wea;
+        TextView high_tem;
+        TextView low_tem;
     }
 }

@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -65,6 +66,8 @@ public class AreaFragment extends Fragment {
     private ProgressDialog mProgressDialog;
     private Province mSelectProvince;
     private City mSelectCity;
+    private Button mSetting;
+    private View mQuit;
 
     public AreaFragment() {
     }
@@ -77,6 +80,24 @@ public class AreaFragment extends Fragment {
         mListView = ((ListView) view.findViewById(R.id.list_view));
         mBack = ((ImageView) view.findViewById(R.id.back));
         mText = ((TextView) view.findViewById(R.id.title));
+        mSetting = ((Button) view.findViewById(R.id.setting));
+        mQuit = view.findViewById(R.id.quit);
+        if (mContext instanceof WeatherActivity) {
+            mSetting.setVisibility(View.VISIBLE);
+            mQuit.setVisibility(View.VISIBLE);
+            mSetting.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Toast.makeText(mContext, " setting ", Toast.LENGTH_SHORT).show();
+                }
+            });
+            mQuit.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Toast.makeText(mContext, " quit ", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
         mAdapter = new ArrayAdapter<>(mContext,
                 android.R.layout.simple_dropdown_item_1line, mDataList);
         mListView.setAdapter(mAdapter);
