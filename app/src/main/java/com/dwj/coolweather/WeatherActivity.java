@@ -4,13 +4,15 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
-import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,9 +35,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.Response;
 
 public class WeatherActivity extends AppCompatActivity {
@@ -63,6 +65,8 @@ public class WeatherActivity extends AppCompatActivity {
     private ImageView mImage;
     private SwipeRefreshLayout mSwap;
     private ArrayList<ViewHolder> holders = new ArrayList<ViewHolder>();
+    private List<HourlyForecastItem> items = new ArrayList<HourlyForecastItem>();
+    private WeatherAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -178,6 +182,13 @@ public class WeatherActivity extends AppCompatActivity {
         mCw_suggestion = ((TextView) findViewById(R.id.cw_suggestion));
         mSwap = ((SwipeRefreshLayout) findViewById(R.id.swipe_layout));
         mSwap.setColorSchemeColors(getResources().getColor(R.color.colorPrimary));
+        RecyclerView recyclerView = ((RecyclerView) findViewById(R.id.hourly_forecast));
+        //设置横向的小时预测结果
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(WeatherActivity.this);
+        linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+        recyclerView.setLayoutManager(linearLayoutManager);
+        mAdapter = new WeatherAdapter(items);
+        recyclerView.setAdapter(mAdapter);
         //增加手动更新的功能 再次访问服务器
         mSwap.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -252,6 +263,11 @@ public class WeatherActivity extends AppCompatActivity {
     }
 
     private void updateData(Weather weather) {
+
+        if (weather == null || !weather.getStatus().equals("ok")) {
+            return;
+        }
+        initAdapterData(weather);
         Weather.BasicBean basic = weather.getBasic();
         if (basic != null) {
             String titleName = basic.getCity();
@@ -283,7 +299,7 @@ public class WeatherActivity extends AppCompatActivity {
                 String low = dailyForecastBean.getTmp().getMin() + getString(R.string.tem);
                 String high = dailyForecastBean.getTmp().getMax() + getString(R.string.tem);
                 //采用listView的缓存机制 只是缓存控件的引用 更新数据的时候只是更新控件内容
-                //不是暴力的删掉控件再加载 提供用户体验
+                //不是暴力的删掉控件再加载,提高用户体验
                 ViewHolder viewHolder = null;
                 if (!mInflate) {
                     viewHolder = new ViewHolder();
@@ -318,6 +334,71 @@ public class WeatherActivity extends AppCompatActivity {
             mCom_suggestion.setText("舒适指数: " + suggestion.getComf().getTxt());
             mCw_suggestion.setText("洗车指数: " + suggestion.getCw().getTxt());
         }
+    }
+
+    boolean isBegin = true;
+
+    private void initAdapterData(Weather weather) {
+        items.clear();
+        Weather.NowBean now = weather.getNow();
+        if (now != null) {
+            HourlyForecastItem item = new HourlyForecastItem();
+            String tmp = now.getTmp();
+            String txt = now.getCond().getTxt();
+            int i = chooseIcon(txt);
+            item.setIconId(i);
+            item.setTem(tmp + getResources().getString(R.string.tem));
+            item.setHour("现在");
+            isBegin = false;
+            items.add(item);
+        }
+        String nowString = TimeUtils.getNowString();
+        String[] split = nowString.split(" ");
+        String s = split[1];
+        String hour = s.split(":")[0];
+        String[] strings = new String[]{"大雨", "小雨", "晴", "雷", "多云"};
+        Random random = new Random();
+        //暂时没有数据
+//        List<Weather.HourlyForecastBean> hourly_forecast = weather.getHourly_forecast();
+//        Log.d(TAG, "initAdapterData: " + hourly_forecast.size());
+       //拿到当前的时间 模拟每小时预报的天气数据
+        int foreCastHourly = Integer.parseInt(hour);
+        Log.d(TAG, "initAdapterData: " + foreCastHourly);
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < strings.length; j++) {
+                foreCastHourly = foreCastHourly + 1;
+                HourlyForecastItem item = new HourlyForecastItem();
+                int icon = chooseIcon(strings[random.nextInt(strings.length)]);
+                String tmp = String.valueOf(20 + random.nextInt(10));
+                item.setTem(tmp + getResources().getString(R.string.tem));
+                item.setIconId(icon);
+                hour = String.valueOf(foreCastHourly % 24);
+                item.setHour(hour + "时");
+                items.add(item);
+            }
+        }
+        //更新Adapter里的数据显示
+        mAdapter.notifyDataSetChanged();
+    }
+
+    private int chooseIcon(String string) {
+        int id = 0;
+        if (string.contains("大雨")) {
+            id = R.drawable.heary_rain;
+        } else if (string.contains("小雨")) {
+            id = R.drawable.small_rain;
+        } else if (string.contains("阴")) {
+            id = R.drawable.cloud;
+        } else if (string.contains("晴")) {
+            id = R.drawable.sun;
+        } else if (string.contains("雷")) {
+            id = R.drawable.thunder;
+        } else if (string.contains("大雪")) {
+            id = R.drawable.heary_snow;
+        } else {
+            id = R.drawable.sun;
+        }
+        return id;
     }
 
     private static class ViewHolder {
