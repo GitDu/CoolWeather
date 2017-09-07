@@ -2,15 +2,19 @@ package com.dwj.coolweather;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.graphics.Palette;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -18,11 +22,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.blankj.utilcode.util.TimeUtils;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.FutureTarget;
+import com.bumptech.glide.request.target.Target;
 import com.dwj.coolweather.db.County;
 import com.dwj.coolweather.gson.Weather;
 import com.dwj.coolweather.util.DataUtil;
@@ -30,12 +37,14 @@ import com.dwj.coolweather.util.HttpUtil;
 
 import org.litepal.crud.DataSupport;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 
 import okhttp3.Call;
 import okhttp3.Response;
@@ -67,6 +76,8 @@ public class WeatherActivity extends AppCompatActivity {
     private ArrayList<ViewHolder> holders = new ArrayList<ViewHolder>();
     private List<HourlyForecastItem> items = new ArrayList<HourlyForecastItem>();
     private WeatherAdapter mAdapter;
+    private RelativeLayout mFooter;
+    private ImageView mChoose;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,9 +138,21 @@ public class WeatherActivity extends AppCompatActivity {
     }
 
     private void initBackground() {
-        String icon_path = mDefaultPreferences.getString(BING, null);
+        final String icon_path = mDefaultPreferences.getString(BING, null);
         if (icon_path != null && icon_path.length() > 0) {
-            Glide.with(WeatherActivity.this).load(icon_path).into(mBackground);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        setBitmap(icon_path);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+            //  Glide.with(WeatherActivity.this).load(icon_path).into(mBackground);
         } else {
             loadIconFromService();
         }
@@ -153,16 +176,42 @@ public class WeatherActivity extends AppCompatActivity {
                 final String icon_path = response.body().string();
                 mDefaultPreferences.edit().putString(BING, icon_path).apply();
                 Log.d(TAG, "onResponse: icon path" + icon_path);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Glide.with(WeatherActivity.this).load(icon_path).into(mBackground);
-                        mSwap.setRefreshing(false);
-                    }
-                });
+                //获得Glide下载图片的地址
+                try {
+                    setBitmap(icon_path);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
+    }
+
+    private void setBitmap(String icon_path) throws InterruptedException, ExecutionException {
+        FutureTarget<File> fileFutureTarget = Glide.with(WeatherActivity.this).load(icon_path).downloadOnly(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL);
+        final File file = fileFutureTarget.get();
+        if (file != null) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Glide.with(WeatherActivity.this).load(file).into(mBackground);
+                    mSwap.setRefreshing(false);
+                    //设置footer的背景颜色
+                    setFooterBackground(file);
+                }
+            });
+        }
+    }
+
+    private void setFooterBackground(File file) {
+        Bitmap bitmap = BitmapFactory.decodeFile(file.getPath());
+        // 创建一个 Pallette 对象
+        Palette palette = Palette.from(bitmap).generate();
+        // 使用 Palette 设置背景颜色
+        int color = palette.getDominantColor(ContextCompat.getColor(this, android.R.color.darker_gray));
+        mFooter.setBackgroundColor(color);
     }
 
     private void initView() {
@@ -182,6 +231,14 @@ public class WeatherActivity extends AppCompatActivity {
         mCw_suggestion = ((TextView) findViewById(R.id.cw_suggestion));
         mSwap = ((SwipeRefreshLayout) findViewById(R.id.swipe_layout));
         mSwap.setColorSchemeColors(getResources().getColor(R.color.colorPrimary));
+        mFooter = ((RelativeLayout) findViewById(R.id.footer));
+        mChoose = (ImageView) findViewById(R.id.choose_weathers);
+        mChoose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(WeatherActivity.this, SelectCityActivity.class));
+            }
+        });
         RecyclerView recyclerView = ((RecyclerView) findViewById(R.id.hourly_forecast));
         //设置横向的小时预测结果
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(WeatherActivity.this);
@@ -361,7 +418,7 @@ public class WeatherActivity extends AppCompatActivity {
         //暂时没有数据
 //        List<Weather.HourlyForecastBean> hourly_forecast = weather.getHourly_forecast();
 //        Log.d(TAG, "initAdapterData: " + hourly_forecast.size());
-       //拿到当前的时间 模拟每小时预报的天气数据
+        //拿到当前的时间 模拟每小时预报的天气数据
         int foreCastHourly = Integer.parseInt(hour);
         Log.d(TAG, "initAdapterData: " + foreCastHourly);
         for (int i = 0; i < 4; i++) {
