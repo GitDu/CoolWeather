@@ -24,14 +24,19 @@
         android:layout_marginStart="10dp"
         android:orientation="horizontal">
 
-        <EditText
+        <com.dwj.coolweather.DeleteEditText
             android:id="@+id/edit"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="5dp"
             android:layout_weight="1"
-            android:drawableEnd="@drawable/delete"
-            android:drawableStart="@drawable/search" />
+            android:background="@drawable/edit_text_background"
+            android:drawableEnd="@drawable/delete_round"
+            android:drawableStart="@drawable/search"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:padding="5dp"
+            android:textSize="20sp"/>
 
         <TextView
             android:id="@+id/cancel_action"
