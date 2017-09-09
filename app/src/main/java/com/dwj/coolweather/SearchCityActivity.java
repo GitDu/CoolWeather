@@ -1,10 +1,17 @@
 package com.dwj.coolweather;
 
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -21,11 +28,12 @@ import java.util.List;
 
 public class SearchCityActivity extends AppCompatActivity {
 
+    private static final String TAG = "SearchCityActivity";
     private DeleteEditText mEdit;
     private TextView mTextView;
     private ListView mList;
-    private List<String> mData = new ArrayList<String>();
-    private ArrayAdapter<String> mAdapter;
+    private List<SpannableStringBuilder> mData = new ArrayList<SpannableStringBuilder>();
+    private ArrayAdapter<SpannableStringBuilder> mAdapter;
     private ArrayList<CountyForSearch> mLocalList;
 
     private Handler mHandler = new Handler(Looper.getMainLooper()) {
@@ -45,7 +53,7 @@ public class SearchCityActivity extends AppCompatActivity {
         mEdit = ((DeleteEditText) findViewById(R.id.edit));
         mTextView = ((TextView) findViewById(R.id.cancel_action));
         mList = ((ListView) findViewById(R.id.data_list));
-        mAdapter = new ArrayAdapter<String>(SearchCityActivity.this,
+        mAdapter = new ArrayAdapter<SpannableStringBuilder>(SearchCityActivity.this,
                 R.layout.search_item, mData);
         mList.setAdapter(mAdapter);
         mEdit.registerCallBack(new DeleteEditText.TextChangeCallBack() {
@@ -80,7 +88,8 @@ public class SearchCityActivity extends AppCompatActivity {
         if (search.length() != 0) {
             for (CountyForSearch countyForSearch : mLocalList) {
                 if (countyForSearch.getCountyName().contains(search)) {
-                    mData.add(countyForSearch.getCountyName());
+                    SpannableStringBuilder name = dealWithString(countyForSearch.getCountyName(), search);
+                    mData.add(name);
                 }
             }
         }
@@ -95,6 +104,28 @@ public class SearchCityActivity extends AppCompatActivity {
             }
             mToast.show();
         }
+    }
+
+    /**
+     * 如果要改变字符串中多处字体颜色，setSpan方法中第一个参数必须要每次new一个对象出来才能显示效果
+     * */
+    private SpannableStringBuilder dealWithString(String name, String search) {
+        //给搜索到的字符标记为红色
+        SpannableStringBuilder spannableString = new SpannableStringBuilder(name);
+        char[] chars = search.toCharArray();
+        int[] ints = new int[chars.length];
+        for (int i = 0; i < chars.length; i++) {
+            ints[i] = name.indexOf(chars[i]);
+        }
+        for (int i = 0; i < ints.length; i++) {
+            //给字符串分开设置特性时  需要单独生成Colorspan 否则后面的会把前面的效果覆盖掉
+            ForegroundColorSpan foregroundColorSpan = new ForegroundColorSpan(Color.RED);
+            Log.d(TAG, "dealWithString: " + ints[i]);
+            spannableString.setSpan(foregroundColorSpan, ints[i],
+                    ints[i] + 1, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        }
+        //不能toString()返回 不然设置的特殊颜色不起作用
+        return spannableString;
     }
 
     @Override
