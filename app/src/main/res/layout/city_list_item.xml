@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/city_item"
+    android:layout_width="match_parent"
+    android:layout_height="80dp"
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/show_time"
+        android:layout_alignParentStart="true"
+        android:textColor="@color/textColor"
+        android:gravity="center"
+        android:textSize="15sp"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"/>
+
+
+    <TextView
+        android:textColor="@color/textColor"
+        android:id="@+id/show_city"
+        android:layout_below="@id/show_time"
+        android:gravity="center"
+        android:textSize="28sp"
+        android:layout_alignParentStart="true"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"/>
+
+    <TextView
+        android:id="@+id/show_tem"
+        android:layout_alignParentEnd="true"
+        android:textColor="@color/textColor"
+        android:layout_centerVertical="true"
+        android:gravity="center"
+        android:textSize="45sp"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"/>
+</RelativeLayout>

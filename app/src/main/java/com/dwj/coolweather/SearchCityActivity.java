@@ -1,5 +1,6 @@
 package com.dwj.coolweather;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
@@ -13,6 +14,7 @@ import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -35,6 +37,7 @@ public class SearchCityActivity extends AppCompatActivity {
     private List<SpannableStringBuilder> mData = new ArrayList<SpannableStringBuilder>();
     private ArrayAdapter<SpannableStringBuilder> mAdapter;
     private ArrayList<CountyForSearch> mLocalList;
+    public static final String CITY_CODE = "search_county";
 
     private Handler mHandler = new Handler(Looper.getMainLooper()) {
         @Override
@@ -56,6 +59,19 @@ public class SearchCityActivity extends AppCompatActivity {
         mAdapter = new ArrayAdapter<SpannableStringBuilder>(SearchCityActivity.this,
                 R.layout.search_item, mData);
         mList.setAdapter(mAdapter);
+        mList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                SpannableStringBuilder spanString = mData.get(i);
+                String cityName = spanString.toString();
+                CountyForSearch city = DataSupport.where("countyName =?", cityName).find(CountyForSearch.class).get(0);
+                Intent intent = new Intent();
+                intent.putExtra(CITY_CODE, city);
+                setResult(RESULT_OK, intent);
+                finish();
+            }
+        });
+
         mEdit.registerCallBack(new DeleteEditText.TextChangeCallBack() {
             @Override
             public void callBack(String string) {
@@ -108,7 +124,7 @@ public class SearchCityActivity extends AppCompatActivity {
 
     /**
      * 如果要改变字符串中多处字体颜色，setSpan方法中第一个参数必须要每次new一个对象出来才能显示效果
-     * */
+     */
     private SpannableStringBuilder dealWithString(String name, String search) {
         //给搜索到的字符标记为红色
         SpannableStringBuilder spannableString = new SpannableStringBuilder(name);

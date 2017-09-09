@@ -28,25 +28,29 @@ public class DeleteEditText extends AppCompatEditText implements View.OnFocusCha
     private TextChangeCallBack mCallBack;
 
     public interface TextChangeCallBack {
-         void callBack(String string);
+        void callBack(String string);
     }
 
+    //正确初始化的写法
     public DeleteEditText(Context context) {
-        this(context, null);
+        super(context);
+        initBitmap();
+
     }
 
     public DeleteEditText(Context context, AttributeSet attrs) {
-        this(context, attrs, android.support.v7.appcompat.R.attr.editTextStyle);
+        super(context, attrs);
+        initBitmap();
     }
 
     public DeleteEditText(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        //防止text变化回调多次
-        this.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         initBitmap();
     }
 
     private void initBitmap() {
+        //防止text变化回调多次
+        this.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         mRightDrawable = getCompoundDrawables()[2];
         mLeftDrawable = getCompoundDrawables()[0];
         if (mRightDrawable == null) {
@@ -83,6 +87,7 @@ public class DeleteEditText extends AppCompatEditText implements View.OnFocusCha
                 Log.d(TAG, "onTouchEvent: " + touchable);
                 if (touchable) {
                     this.setText("");
+                    Log.d(TAG, "onTouchEvent: start animation");
                     startViewAnimation();
                 }
             }
