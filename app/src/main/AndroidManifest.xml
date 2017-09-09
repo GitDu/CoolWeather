@@ -22,7 +22,11 @@
             android:name=".WeatherActivity"
             android:launchMode="singleTop" />
         <activity android:name=".SelectCityActivity" />
-        <activity android:name=".SearchCityActivity"></activity>
+        <activity android:name=".SearchCityActivity" />
+
+        <service
+            android:name=".service.SaveDataService"
+            android:exported="false"></service>
     </application>
 
 </manifest>

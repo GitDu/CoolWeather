@@ -20,9 +20,9 @@ import org.json.JSONObject;
 public class DataUtil {
 
     private static final String TAG = "DataUtil";
-    private static final String JSON_DATA_NAME = "name";
-    private static final String JSON_DATA_ID = "id";
-    private static final String WEATHER_ID = "weather_id";
+    public static final String JSON_DATA_NAME = "name";
+    public static final String JSON_DATA_ID = "id";
+    public static final String WEATHER_ID = "weather_id";
 
     public static boolean saveProvinceData(String data) {
         Log.d(TAG, "saveProvinceData: " + data);

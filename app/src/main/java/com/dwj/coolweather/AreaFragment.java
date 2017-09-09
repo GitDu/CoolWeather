@@ -24,6 +24,7 @@ import android.widget.Toast;
 import com.dwj.coolweather.db.City;
 import com.dwj.coolweather.db.County;
 import com.dwj.coolweather.db.Province;
+import com.dwj.coolweather.service.SaveDataService;
 import com.dwj.coolweather.util.DataUtil;
 import com.dwj.coolweather.util.HttpUtil;
 
@@ -61,9 +62,11 @@ public class AreaFragment extends Fragment {
     private static final int QUERY_CITY = 1;
     private static final int QUERY_COUNTY = 2;
 
+    private static final String INIT_LOCAL_DATA = "init_local_data";
     private int mQueryNumber = QUERY_PROVINCE;
     private ArrayAdapter<String> mAdapter;
     private ProgressDialog mProgressDialog;
+    private SharedPreferences mShare;
     private Province mSelectProvince;
     private City mSelectCity;
     private Button mSetting;
@@ -133,10 +136,10 @@ public class AreaFragment extends Fragment {
                         Intent intent = new Intent(mContext, WeatherActivity.class);
                         intent.putExtra("weatherUrl", weatherUrl);
                         if (mContext instanceof WeatherActivity) {
-                            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-                            String lastCounty = sharedPreferences.getString(WeatherActivity.LAST_COUNTY_NAME, null);
+                            mShare = PreferenceManager.getDefaultSharedPreferences(mContext);
+                            String lastCounty = mShare.getString(WeatherActivity.LAST_COUNTY_NAME, null);
                             if (lastCounty != null && lastCounty.length() > 0 && !lastCounty.equals(selectCounty.getCountyName())) {
-                                sharedPreferences.edit().putString(MainActivity.WEATHER_DATA, null).apply();
+                                mShare.edit().putString(MainActivity.WEATHER_DATA, null).apply();
                                 mContext.startActivity(intent);
                             }
                             ((WeatherActivity) mContext).getDrawLayout().closeDrawer(GravityCompat.START);
@@ -214,6 +217,13 @@ public class AreaFragment extends Fragment {
             mDataList.clear();
             for (Province province : mProvincesList) {
                 mDataList.add(province.getProvinceName());
+                //开启后台服务 初始化本地用来查询的数据库
+            }
+            mShare = PreferenceManager.getDefaultSharedPreferences(mContext);
+            //在初次进入app的时候 加载生成本地数据库 存储数据
+            if (!mShare.getBoolean(INIT_LOCAL_DATA, false)) {
+                SaveDataService.startActionFoo(mContext, mProvincesList);
+                mShare.edit().putBoolean(INIT_LOCAL_DATA, true).apply();
             }
             mAdapter.notifyDataSetChanged();
             //定位到list的第一个
@@ -283,8 +293,8 @@ public class AreaFragment extends Fragment {
     private void showProgressDialog() {
         if (mProgressDialog == null) {
             mProgressDialog = new ProgressDialog(mContext);
-            mProgressDialog.setTitle("网络请求");
-            mProgressDialog.setMessage("waiting. . .");
+            mProgressDialog.setTitle(getString(R.string.network));
+            mProgressDialog.setMessage(getString(R.string.wait));
         }
         mProgressDialog.show();
     }

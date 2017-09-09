@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.AppCompatEditText;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -16,6 +17,7 @@ import android.widget.Toast;
 
 /**
  * Created by duWenJun on 17-9-8.
+ * 自定义可以监听输入 删除输入的控件
  */
 
 public class DeleteEditText extends AppCompatEditText implements View.OnFocusChangeListener, TextWatcher {
@@ -23,6 +25,11 @@ public class DeleteEditText extends AppCompatEditText implements View.OnFocusCha
     private static final String TAG = "DeleteEditText";
     private Drawable mRightDrawable;
     private Drawable mLeftDrawable;
+    private TextChangeCallBack mCallBack;
+
+    public interface TextChangeCallBack {
+         void callBack(String string);
+    }
 
     public DeleteEditText(Context context) {
         this(context, null);
@@ -34,6 +41,8 @@ public class DeleteEditText extends AppCompatEditText implements View.OnFocusCha
 
     public DeleteEditText(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        //防止text变化回调多次
+        this.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         initBitmap();
     }
 
@@ -42,9 +51,11 @@ public class DeleteEditText extends AppCompatEditText implements View.OnFocusCha
         mLeftDrawable = getCompoundDrawables()[0];
         if (mRightDrawable == null) {
             mRightDrawable = getContext().getResources().getDrawable(R.drawable.delete_round);
+        }
+        if (mLeftDrawable == null) {
             mLeftDrawable = getContext().getResources().getDrawable(R.drawable.search);
         }
-        mLeftDrawable.setBounds(0,0,mLeftDrawable.getIntrinsicWidth(), mLeftDrawable.getIntrinsicHeight());
+        mLeftDrawable.setBounds(0, 0, mLeftDrawable.getIntrinsicWidth(), mLeftDrawable.getIntrinsicHeight());
         mRightDrawable.setBounds(0, 0, mRightDrawable.getIntrinsicWidth(), mRightDrawable.getIntrinsicHeight());
         setClearIconVisible(false);
         setOnFocusChangeListener(this);
@@ -72,7 +83,7 @@ public class DeleteEditText extends AppCompatEditText implements View.OnFocusCha
                 Log.d(TAG, "onTouchEvent: " + touchable);
                 if (touchable) {
                     this.setText("");
-                    startAnimation();
+                    startViewAnimation();
                 }
             }
         }
@@ -82,11 +93,17 @@ public class DeleteEditText extends AppCompatEditText implements View.OnFocusCha
 
     @Override
     public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-            setClearIconVisible(charSequence.length() > 0);
+        setClearIconVisible(charSequence.length() > 0);
+        //设置EditText的输入监听 动态的查询数据库
     }
 
     @Override
     public void afterTextChanged(Editable editable) {
+        Log.d(TAG, "onTextChanged: " + editable.toString());
+        String string = editable.toString();
+        if (mCallBack != null) {
+            mCallBack.callBack(string);
+        }
 
     }
 
@@ -101,9 +118,8 @@ public class DeleteEditText extends AppCompatEditText implements View.OnFocusCha
     }
 
 
-    public void startAnimation(){
+    public void startViewAnimation() {
         DeleteEditText.this.startAnimation(getAnimation());
-        Toast.makeText(getContext(), " 请输入需要查询的地址 ", Toast.LENGTH_SHORT).show();
     }
 
     public Animation getAnimation() {
@@ -112,5 +128,15 @@ public class DeleteEditText extends AppCompatEditText implements View.OnFocusCha
         translateAnimation.setFillAfter(true);
         translateAnimation.setDuration(1000);
         return translateAnimation;
+    }
+
+    public void registerCallBack(TextChangeCallBack callBack) {
+        this.mCallBack = callBack;
+    }
+
+    public void unRegisterCallBack() {
+        if (mCallBack != null) {
+            mCallBack = null;
+        }
     }
 }
