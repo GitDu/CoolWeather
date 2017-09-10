@@ -8,6 +8,16 @@ public class SelectCityItem {
     private String time;
     private String cityName;
     private String tem;
+    private boolean isLast;
+
+    public boolean isLast() {
+        return isLast;
+    }
+
+    public void setLast(boolean last) {
+        isLast = last;
+    }
+
 
     public String getTime() {
         return time;

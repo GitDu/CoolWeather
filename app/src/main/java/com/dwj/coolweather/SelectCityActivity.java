@@ -26,29 +26,24 @@ import okhttp3.Response;
 public class SelectCityActivity extends AppCompatActivity {
 
     private static final String TAG = "SelectCityActivity";
-    private ImageView mImageView;
     private RecyclerView mRecycle;
     private List<SelectCityItem> mList = new ArrayList<SelectCityItem>();
     private SelectCityAdapter mAdapter;
-    private static final int REQUEST_CODE = 1;
+    public static final int REQUEST_CODE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_city);
-        mImageView = ((ImageView) findViewById(R.id.add));
         mRecycle = ((RecyclerView) findViewById(R.id.select_city_list));
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(SelectCityActivity.this);
         linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        SelectCityItem last = new SelectCityItem();
+        last.setLast(true);
+        mList.add(last);
         mRecycle.setLayoutManager(linearLayoutManager);
         mAdapter = new SelectCityAdapter(mList);
         mRecycle.setAdapter(mAdapter);
-        mImageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivityForResult(new Intent(SelectCityActivity.this, SearchCityActivity.class), REQUEST_CODE);
-            }
-        });
 
     }
 
@@ -81,14 +76,36 @@ public class SelectCityActivity extends AppCompatActivity {
                     SelectCityActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            mList.add(selectCityItem);
-                            mAdapter.notifyDataSetChanged();
+                            //防止重复添加
+                            if (mList.size() > 1) {
+                                forceAddAgain(selectCityItem);
+                            }
+                            mList.add(mList.size() - 1, selectCityItem);
+                            mAdapter.notifyItemInserted(mList.size() - 2);
+                            //mAdapter.notifyDataSetChanged();
+                            //将recycle定位到最后一行
+                            mRecycle.scrollToPosition(mList.size() - 1);
+
                         }
                     });
                 }
             });
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    //防止重复添加
+    private void forceAddAgain(SelectCityItem item) {
+        //如果有相等的 先删掉里面的 在添加最新的信息
+        //不能在遍历的时候删除数据 recycle正确删除方式
+        for (int i = 0; i < mList.size(); i++) {
+            if (item.getCityName().equals(mList.get(i).getCityName())) {
+                mAdapter.notifyItemRemoved(i);
+                mList.remove(i);
+                mAdapter.notifyItemRangeRemoved(0, mAdapter.getItemCount());
+                break;
+            }
+        }
     }
 
     private String getNowTime() {
