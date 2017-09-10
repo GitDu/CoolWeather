@@ -50,6 +50,7 @@ import okhttp3.Response;
 import static com.dwj.coolweather.Contacts.BING;
 import static com.dwj.coolweather.Contacts.BING_ICON;
 import static com.dwj.coolweather.Contacts.LAST_COUNTY_NAME;
+import static com.dwj.coolweather.Contacts.WEATHER_DATA;
 
 public class WeatherActivity extends AppCompatActivity {
 
@@ -112,7 +113,7 @@ public class WeatherActivity extends AppCompatActivity {
         super.onNewIntent(intent);
     }
 
-//    private void refreshViews() {
+    //    private void refreshViews() {
 //        if (mForeCastLayout != null) {
 //            int childCount = mForeCastLayout.getChildCount();
 //            Log.d(TAG, "onNewIntent: " + childCount);
@@ -240,30 +241,21 @@ public class WeatherActivity extends AppCompatActivity {
             public void onRefresh() {
                 if (mWeatherUrl == null) {
                     //其中有view是动态加载的 需要再次清除view
-                    String string = mDefaultPreferences.getString(MainActivity.WEATHER_DATA, null);
-                    Weather weather = DataUtil.handleWeatherData(string);
-                    if (weather != null) {
-                        Weather.BasicBean basic = weather.getBasic();
-                        if (basic != null) {
-                            String city = basic.getCity();
-                            List<County> counties = DataSupport.where("countyName= ?", city).find(County.class);
-                            mWeatherUrl = "http://guolin.tech/api/weather?cityid=" +
-                                    counties.get(0).getWeatherId() + "&key=a51a0df067ff48fd98aa27b1324594e7";
-
-                        }
-                    }
+                    mWeatherUrl = DataUtil.getWeatherUrlPath(WeatherActivity.this);
                 }
                 //访问网络请求天气数据
-                queryDataFromService();
+                if (mWeatherUrl != null) {
+                    queryDataFromService();
+                    loadIconFromService();
+                }
                 //访问必应图片
-                loadIconFromService();
             }
         });
         mDefaultPreferences = PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this);
     }
 
     private void initData() {
-        String string = mDefaultPreferences.getString(MainActivity.WEATHER_DATA, null);
+        String string = mDefaultPreferences.getString(WEATHER_DATA, null);
         if (string == null || string.length() == 0) {
             //更新的时候直接再次初始化这个控件
             queryDataFromService();
@@ -292,7 +284,7 @@ public class WeatherActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String string = response.body().string();
-                mDefaultPreferences.edit().putString(MainActivity.WEATHER_DATA, string).apply();
+                mDefaultPreferences.edit().putString(WEATHER_DATA, string).apply();
                 final Weather weather = DataUtil.handleWeatherData(string);
                 if (weather != null) {
                     runOnUiThread(new Runnable() {

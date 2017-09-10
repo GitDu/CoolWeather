@@ -9,6 +9,8 @@ import android.util.Log;
 
 import com.blankj.utilcode.util.Utils;
 
+import static com.dwj.coolweather.Contacts.WEATHER_DATA;
+
 /**
  * 获得省 市 县的名称信息 weather id
  * 注册天气查询的key:http://console.heweather.com/register
@@ -17,7 +19,6 @@ import com.blankj.utilcode.util.Utils;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
-    public static final String WEATHER_DATA = "weatherData";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

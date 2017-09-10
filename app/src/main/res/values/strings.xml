@@ -15,4 +15,10 @@
     <string name="network">网络请求中</string>
     <string name="wait">waiting. . .</string>
     <string name="search_city">请输入需要查找的城市</string>
+    <string name="setting_activity">设置</string>
+    <string name="auto_update_time">设置自动更新的时间</string>
+    <string name="auto_update">后台自动更新</string>
+    <string name="location">自动定位</string>
+    <string name="version_up">版本自动更新</string>
+    <string name="about">关于我们</string>
 </resources>

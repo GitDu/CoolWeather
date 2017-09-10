@@ -38,6 +38,7 @@ import okhttp3.Call;
 import okhttp3.Response;
 
 import static com.dwj.coolweather.Contacts.LAST_COUNTY_NAME;
+import static com.dwj.coolweather.Contacts.WEATHER_DATA;
 
 /**
  * Created by duWenJun on 17-9-2.
@@ -94,13 +95,15 @@ public class AreaFragment extends Fragment {
                 @Override
                 public void onClick(View view) {
                     //跳转到setting界面
-
+                    startActivity(new Intent(mContext, SettingActivity.class));
+                    ((WeatherActivity) mContext).getDrawLayout().closeDrawer(GravityCompat.START);
                 }
             });
             mQuit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     ((WeatherActivity) mContext).finish();
+                    ((WeatherActivity) mContext).getDrawLayout().closeDrawer(GravityCompat.START);
                 }
             });
         }
@@ -142,7 +145,7 @@ public class AreaFragment extends Fragment {
                             mShare = PreferenceManager.getDefaultSharedPreferences(mContext);
                             String lastCounty = mShare.getString(LAST_COUNTY_NAME, null);
                             if (lastCounty != null && lastCounty.length() > 0 && !lastCounty.equals(selectCounty.getCountyName())) {
-                                mShare.edit().putString(MainActivity.WEATHER_DATA, null).apply();
+                                mShare.edit().putString(WEATHER_DATA, null).apply();
                                 mContext.startActivity(intent);
                             }
                             ((WeatherActivity) mContext).getDrawLayout().closeDrawer(GravityCompat.START);

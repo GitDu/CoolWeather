@@ -33,9 +33,6 @@ import org.litepal.crud.callback.FindMultiCallback;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.dwj.coolweather.Contacts.BING;
-
-
 public class SearchCityActivity extends AppCompatActivity {
 
     private static final String TAG = "SearchCityActivity";

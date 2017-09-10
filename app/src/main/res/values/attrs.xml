@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <attr name="icon" format="reference"/>
+    <attr name="text" format="reference"/>
+    <attr name="isHide" format="boolean"/>
+
+    <declare-styleable name="SettingLayoutItem">
+        <attr name="icon"/>
+        <attr name="text"/>
+        <attr name="isHide"/>
+    </declare-styleable>
+</resources>

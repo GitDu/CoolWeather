@@ -1,5 +1,8 @@
 package com.dwj.coolweather.util;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -12,6 +15,11 @@ import com.google.gson.Gson;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.litepal.crud.DataSupport;
+
+import java.util.List;
+
+import static com.dwj.coolweather.Contacts.WEATHER_DATA;
 
 /**
  * Created by duWenJun on 17-9-2.
@@ -97,11 +105,29 @@ public class DataUtil {
             JSONArray heWeather = jsonObject.getJSONArray("HeWeather");
             Log.d(TAG, "handleWeatherData: heWeather" + heWeather.get(0).toString());
             Gson gson = new Gson();
-           return gson.fromJson(heWeather.get(0).toString(), Weather.class);
+            return gson.fromJson(heWeather.get(0).toString(), Weather.class);
         } catch (JSONException e) {
             e.printStackTrace();
         }
         return null;
     }
 
+
+    public static String getWeatherUrlPath(Context context) {
+        SharedPreferences share = PreferenceManager.getDefaultSharedPreferences(context);
+        String string = share.getString(WEATHER_DATA, null);
+        Weather weather = DataUtil.handleWeatherData(string);
+        String path = null;
+        if (weather != null) {
+            Weather.BasicBean basic = weather.getBasic();
+            if (basic != null) {
+                String city = basic.getCity();
+                List<County> counties = DataSupport.where("countyName= ?", city).find(County.class);
+                path = "http://guolin.tech/api/weather?cityid=" +
+                        counties.get(0).getWeatherId() + "&key=a51a0df067ff48fd98aa27b1324594e7";
+
+            }
+        }
+        return path;
+    }
 }

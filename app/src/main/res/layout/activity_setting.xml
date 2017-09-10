@@ -1,9 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:cool="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context="com.dwj.coolweather.SettingActivity">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/colorPrimary"
+        android:gravity="center"
+        android:text="@string/setting_activity"
+        android:textColor="@color/textColor"
+        android:textSize="25sp" />
+
+    <com.dwj.coolweather.SettingLayoutItem
+        android:id="@+id/auto_update"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        cool:icon="@drawable/auto_update"
+        cool:isHide="false"
+        cool:text="@string/auto_update" />
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray" />
+
+    <com.dwj.coolweather.SettingLayoutItem
+        android:id="@+id/alarm"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        cool:icon="@drawable/alarm"
+        cool:isHide="false"
+        cool:text="@string/auto_update_time" />
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray" />
+
+    <com.dwj.coolweather.SettingLayoutItem
+        android:id="@+id/location"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        cool:icon="@drawable/location"
+        cool:isHide="false"
+        cool:text="@string/location" />
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray" />
+
+    <com.dwj.coolweather.SettingLayoutItem
+        android:id="@+id/version_up"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        cool:icon="@drawable/version_up"
+        cool:isHide="false"
+        cool:text="@string/version_up" />
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray" />
+
+    <com.dwj.coolweather.SettingLayoutItem
+        android:id="@+id/about"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        cool:icon="@drawable/about"
+        cool:isHide="true"
+        cool:text="@string/about" />
 </LinearLayout>
