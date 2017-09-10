@@ -15,6 +15,7 @@ import com.dwj.coolweather.db.CountyForSearch;
 import com.dwj.coolweather.gson.Weather;
 import com.dwj.coolweather.util.DataUtil;
 import com.dwj.coolweather.util.HttpUtil;
+import com.dwj.coolweather.util.ToolUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,6 +36,8 @@ public class SelectCityActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_city);
+        ToolUtil.fitStatusBar(SelectCityActivity.this);
+        initBackupGround();
         mRecycle = ((RecyclerView) findViewById(R.id.select_city_list));
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(SelectCityActivity.this);
         linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
@@ -47,6 +50,11 @@ public class SelectCityActivity extends AppCompatActivity {
 
     }
 
+    private void initBackupGround() {
+        ToolUtil.fitStatusBar(SelectCityActivity.this);
+        ImageView background = (ImageView) findViewById(R.id.background);
+        ToolUtil.initBackupGround(SelectCityActivity.this, background);
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, final Intent data) {

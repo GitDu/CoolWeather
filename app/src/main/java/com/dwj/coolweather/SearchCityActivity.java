@@ -1,10 +1,12 @@
 package com.dwj.coolweather;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Spannable;
@@ -16,17 +18,23 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.dwj.coolweather.db.CountyForSearch;
+import com.dwj.coolweather.util.ToolUtil;
 
 import org.litepal.crud.DataSupport;
 import org.litepal.crud.callback.FindMultiCallback;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.dwj.coolweather.Contacts.BING;
+
 
 public class SearchCityActivity extends AppCompatActivity {
 
@@ -56,6 +64,7 @@ public class SearchCityActivity extends AppCompatActivity {
         mEdit = ((DeleteEditText) findViewById(R.id.edit));
         mTextView = ((TextView) findViewById(R.id.cancel_action));
         mList = ((ListView) findViewById(R.id.data_list));
+        initBackupGround();
         mAdapter = new ArrayAdapter<SpannableStringBuilder>(SearchCityActivity.this,
                 R.layout.search_item, mData);
         mList.setAdapter(mAdapter);
@@ -79,6 +88,12 @@ public class SearchCityActivity extends AppCompatActivity {
                 searchAtLocal(string.trim());
             }
         });
+    }
+
+    private void initBackupGround() {
+        ToolUtil.fitStatusBar(SearchCityActivity.this);
+        ImageView background = (ImageView) findViewById(R.id.background);
+        ToolUtil.initBackupGround(SearchCityActivity.this, background);
     }
 
     private void searchAtLocal(String string) {

@@ -37,6 +37,8 @@ import java.util.List;
 import okhttp3.Call;
 import okhttp3.Response;
 
+import static com.dwj.coolweather.Contacts.LAST_COUNTY_NAME;
+
 /**
  * Created by duWenJun on 17-9-2.
  * 个人认证key: a51a0df067ff48fd98aa27b1324594e7
@@ -91,13 +93,14 @@ public class AreaFragment extends Fragment {
             mSetting.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Toast.makeText(mContext, " setting ", Toast.LENGTH_SHORT).show();
+                    //跳转到setting界面
+
                 }
             });
             mQuit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Toast.makeText(mContext, " quit ", Toast.LENGTH_SHORT).show();
+                    ((WeatherActivity) mContext).finish();
                 }
             });
         }
@@ -137,7 +140,7 @@ public class AreaFragment extends Fragment {
                         intent.putExtra("weatherUrl", weatherUrl);
                         if (mContext instanceof WeatherActivity) {
                             mShare = PreferenceManager.getDefaultSharedPreferences(mContext);
-                            String lastCounty = mShare.getString(WeatherActivity.LAST_COUNTY_NAME, null);
+                            String lastCounty = mShare.getString(LAST_COUNTY_NAME, null);
                             if (lastCounty != null && lastCounty.length() > 0 && !lastCounty.equals(selectCounty.getCountyName())) {
                                 mShare.edit().putString(MainActivity.WEATHER_DATA, null).apply();
                                 mContext.startActivity(intent);
