@@ -130,4 +130,9 @@ public class SettingLayoutItem extends LinearLayout {
     public interface EventCallBack {
         void callBack(boolean isCheck);
     }
+
+    public void setCheckState(boolean state) {
+        mCheck.setEnabled(state);
+    }
+
 }

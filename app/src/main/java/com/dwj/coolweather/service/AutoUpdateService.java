@@ -24,6 +24,7 @@ import okhttp3.Response;
 
 import static com.dwj.coolweather.Contacts.BING;
 import static com.dwj.coolweather.Contacts.BING_ICON;
+import static com.dwj.coolweather.Contacts.CHOCE_INDEX;
 import static com.dwj.coolweather.Contacts.WEATHER_DATA;
 
 public class AutoUpdateService extends Service {
@@ -48,6 +49,22 @@ public class AutoUpdateService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand: ");
         //设置计时任务 自动更新天气数据
+        int index = intent.getIntExtra(CHOCE_INDEX, -1);
+        if (index != -1) {
+            switch (index) {
+                case 0:
+                    mDefaultTime = 4 * 60 * 60 * 1000;
+                    break;
+                case 1:
+                    mDefaultTime = 6 * 60 * 60 * 1000;
+                    break;
+                case 2:
+                    mDefaultTime = 8 * 60 * 60 * 1000;
+                    break;
+                default:
+                    throw new IllegalArgumentException(" intent send wrong ");
+            }
+        }
         mAlarm = (AlarmManager) getSystemService(ALARM_SERVICE);
         Intent selfIntent = new Intent(AutoUpdateService.this, AutoUpdateService.class);
         mIntent = PendingIntent.getService(AutoUpdateService.this, 0, selfIntent, 0);

@@ -1,11 +1,17 @@
 package com.dwj.coolweather;
 
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.Toast;
 
 import com.dwj.coolweather.service.AutoUpdateService;
+
+import static com.dwj.coolweather.Contacts.CHOCE_INDEX;
 
 public class SettingActivity extends AppCompatActivity {
     private static final String TAG = "SettingActivity";
@@ -31,9 +37,10 @@ public class SettingActivity extends AppCompatActivity {
         mAbout = ((SettingLayoutItem) findViewById(R.id.about));
     }
 
-    /**功能 1.开启后台服务,自动更新数据
-     *
-     * */
+    /**
+     * 功能 1.开启后台服务,自动更新数据
+     * 功能 2. 设置单选框 选择定义更新的时间
+     */
     @Override
     protected void onResume() {
         super.onResume();
@@ -44,11 +51,53 @@ public class SettingActivity extends AppCompatActivity {
                     //开启自动更新天气信息的服务
                     startService(new Intent(SettingActivity.this, AutoUpdateService.class));
                     Toast.makeText(SettingActivity.this, " 自动更新服务已开启 ", Toast.LENGTH_SHORT).show();
+                    mAlarm.setCheckState(false);
                 } else {
                     //关闭自动更新天气信息的服务
+                    mAlarm.setCheckState(true);
                     stopService(new Intent(SettingActivity.this, AutoUpdateService.class));
                     Toast.makeText(SettingActivity.this, " 自动更新服务已关闭 ", Toast.LENGTH_SHORT).show();
                 }
+            }
+        });
+
+        mAlarm.registerCallBack(new SettingLayoutItem.EventCallBack() {
+            @Override
+            public void callBack(boolean isCheck) {
+                if (isCheck) {
+                    mAuto_update.setCheckState(false);
+                    final String[] strings = new String[]{"每隔4小时更新一次", "每隔6小时更新一次", "每隔8小时更新一次"};
+                    final SharedPreferences share = PreferenceManager.getDefaultSharedPreferences(SettingActivity.this);
+                    int index = share.getInt(CHOCE_INDEX, -1);
+                    AlertDialog dialog = new AlertDialog.Builder(SettingActivity.this)
+                            .setTitle("选择需要更新的时间间隔")
+                            .setIcon(R.drawable.single_choose)
+                            .setSingleChoiceItems(strings, index, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    share.edit().putInt(CHOCE_INDEX, i).apply();
+                                    dialogInterface.dismiss();
+                                    Toast.makeText(SettingActivity.this, strings[i], Toast.LENGTH_SHORT).show();
+                                    Intent intent = new Intent(SettingActivity.this, AutoUpdateService.class);
+                                    intent.putExtra(CHOCE_INDEX, i);
+                                    startService(intent);
+                                }
+                            }).setCancelable(false)
+                            .create();
+                    dialog.show();
+                } else {
+                    mAuto_update.setCheckState(true);
+                    Intent intent = new Intent(SettingActivity.this, AutoUpdateService.class);
+                    stopService(intent);
+                    Toast.makeText(SettingActivity.this, " 取消了定时更新的任务 ", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        mAbout.registerCallBack(new SettingLayoutItem.EventCallBack() {
+            @Override
+            public void callBack(boolean isCheck) {
+                Toast.makeText(SettingActivity.this, " 功能暂未实现 ", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -57,6 +106,7 @@ public class SettingActivity extends AppCompatActivity {
     protected void onDestroy() {
         //解回调注册
         mAuto_update.unRegisterCallBack();
+        mAlarm.unRegisterCallBack();
         super.onDestroy();
     }
 }
