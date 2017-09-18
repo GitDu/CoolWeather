@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -19,6 +20,7 @@ import com.dwj.coolweather.util.ToolUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import okhttp3.Call;
@@ -31,6 +33,32 @@ public class SelectCityActivity extends AppCompatActivity {
     private List<SelectCityItem> mList = new ArrayList<SelectCityItem>();
     private SelectCityAdapter mAdapter;
     public static final int REQUEST_CODE = 1;
+
+    //初始化itemTouchHelpCallBack对象
+    private DefaultItemTouchHelpCallBack mHelpCallBack = new DefaultItemTouchHelpCallBack(new DefaultItemTouchHelpCallBack.OnItemTouchCallBackListener() {
+        @Override
+        public void onSwiped(int position) {
+            //判断position的位置是否是列表的最后一个
+            if (mList != null && mList.size() > 0) {
+                //删除数据  更新ui
+                Log.d(TAG, "onSwiped: " + position);
+                mList.remove(position);
+                mAdapter.notifyItemRemoved(position);
+            }
+        }
+
+        @Override
+        public boolean onMove(int srcPosition, int targetPosition) {
+            if (mList != null && mList.size() > 0){
+                //更新ui变化 列表变化除去最后一列变化
+                Log.d(TAG, "onMove: " + "src position " + srcPosition + "target " + targetPosition);
+                Collections.swap(mList, srcPosition, targetPosition);
+                mAdapter.notifyItemMoved(srcPosition, targetPosition);
+                return true;
+            }
+            return false;
+        }
+    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +75,11 @@ public class SelectCityActivity extends AppCompatActivity {
         mRecycle.setLayoutManager(linearLayoutManager);
         mAdapter = new SelectCityAdapter(mList);
         mRecycle.setAdapter(mAdapter);
-
+        //设置recycleView的拖拽和滑动删除事件
+        mHelpCallBack.setLongPressDragEnabled(true);
+        mHelpCallBack.setSwipeEnabled(true);
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(mHelpCallBack);
+        itemTouchHelper.attachToRecyclerView(mRecycle);
     }
 
     private void initBackupGround() {

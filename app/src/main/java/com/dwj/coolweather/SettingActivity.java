@@ -94,6 +94,29 @@ public class SettingActivity extends AppCompatActivity {
             }
         });
 
+        mVersion_up.registerCallBack(new SettingLayoutItem.EventCallBack() {
+            @Override
+            public void callBack(boolean isCheck) {
+                if (isCheck) {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                Thread.sleep(3000);
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(SettingActivity.this, " 版本已经是最新版 ", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }).start();
+                }
+            }
+        });
         mAbout.registerCallBack(new SettingLayoutItem.EventCallBack() {
             @Override
             public void callBack(boolean isCheck) {
@@ -107,6 +130,8 @@ public class SettingActivity extends AppCompatActivity {
         //解回调注册
         mAuto_update.unRegisterCallBack();
         mAlarm.unRegisterCallBack();
+        mAbout.unRegisterCallBack();
+        mVersion_up.unRegisterCallBack();
         super.onDestroy();
     }
 }
