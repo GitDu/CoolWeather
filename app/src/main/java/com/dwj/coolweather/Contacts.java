@@ -9,5 +9,5 @@ public class Contacts {
     public static final String BING = "bing";
     public static final String LAST_COUNTY_NAME = "lastCountyName";
     public static final String WEATHER_DATA = "weatherData";
-    public static final String CHOCE_INDEX = "chose";
+    public static final String CHOSE_INDEX = "chose";
 }

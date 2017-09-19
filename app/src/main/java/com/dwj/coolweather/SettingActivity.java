@@ -11,7 +11,7 @@ import android.widget.Toast;
 
 import com.dwj.coolweather.service.AutoUpdateService;
 
-import static com.dwj.coolweather.Contacts.CHOCE_INDEX;
+import static com.dwj.coolweather.Contacts.CHOSE_INDEX;
 
 public class SettingActivity extends AppCompatActivity {
     private static final String TAG = "SettingActivity";
@@ -68,18 +68,18 @@ public class SettingActivity extends AppCompatActivity {
                     mAuto_update.setCheckState(false);
                     final String[] strings = new String[]{"每隔4小时更新一次", "每隔6小时更新一次", "每隔8小时更新一次"};
                     final SharedPreferences share = PreferenceManager.getDefaultSharedPreferences(SettingActivity.this);
-                    int index = share.getInt(CHOCE_INDEX, -1);
+                    int index = share.getInt(CHOSE_INDEX, -1);
                     AlertDialog dialog = new AlertDialog.Builder(SettingActivity.this)
                             .setTitle("选择需要更新的时间间隔")
                             .setIcon(R.drawable.single_choose)
                             .setSingleChoiceItems(strings, index, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialogInterface, int i) {
-                                    share.edit().putInt(CHOCE_INDEX, i).apply();
+                                    share.edit().putInt(CHOSE_INDEX, i).apply();
                                     dialogInterface.dismiss();
                                     Toast.makeText(SettingActivity.this, strings[i], Toast.LENGTH_SHORT).show();
                                     Intent intent = new Intent(SettingActivity.this, AutoUpdateService.class);
-                                    intent.putExtra(CHOCE_INDEX, i);
+                                    intent.putExtra(CHOSE_INDEX, i);
                                     startService(intent);
                                 }
                             }).setCancelable(false)

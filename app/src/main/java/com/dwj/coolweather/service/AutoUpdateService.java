@@ -6,25 +6,22 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
-import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.Target;
-import com.dwj.coolweather.WeatherActivity;
 import com.dwj.coolweather.util.DataUtil;
 import com.dwj.coolweather.util.HttpUtil;
 
 import java.io.IOException;
 
 import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.Response;
 
 import static com.dwj.coolweather.Contacts.BING;
 import static com.dwj.coolweather.Contacts.BING_ICON;
-import static com.dwj.coolweather.Contacts.CHOCE_INDEX;
+import static com.dwj.coolweather.Contacts.CHOSE_INDEX;
 import static com.dwj.coolweather.Contacts.WEATHER_DATA;
 
 public class AutoUpdateService extends Service {
@@ -49,7 +46,7 @@ public class AutoUpdateService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand: ");
         //设置计时任务 自动更新天气数据
-        int index = intent.getIntExtra(CHOCE_INDEX, -1);
+        int index = intent.getIntExtra(CHOSE_INDEX, -1);
         if (index != -1) {
             switch (index) {
                 case 0:

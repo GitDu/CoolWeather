@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <litepal>
     <dbname value="weather_cool" />
-    <version value="1" />
+    <version value="2" />
 
     <list>
         <mapping class="com.dwj.coolweather.db.Province" />
         <mapping class="com.dwj.coolweather.db.City" />
         <mapping class="com.dwj.coolweather.db.County" />
         <mapping class="com.dwj.coolweather.db.CountyForSearch" />
+        <mapping class="com.dwj.coolweather.db.SelectCityWeatherData" />
     </list>
 
 </litepal>

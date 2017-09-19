@@ -1,6 +1,9 @@
 package com.dwj.coolweather;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -13,10 +16,13 @@ import android.widget.ImageView;
 import com.blankj.utilcode.util.TimeUtils;
 import com.dwj.coolweather.bean.SelectCityItem;
 import com.dwj.coolweather.db.CountyForSearch;
+import com.dwj.coolweather.db.SelectCityWeatherData;
 import com.dwj.coolweather.gson.Weather;
 import com.dwj.coolweather.util.DataUtil;
 import com.dwj.coolweather.util.HttpUtil;
 import com.dwj.coolweather.util.ToolUtil;
+
+import org.litepal.crud.DataSupport;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,6 +32,8 @@ import java.util.List;
 import okhttp3.Call;
 import okhttp3.Response;
 
+import static com.dwj.coolweather.Contacts.WEATHER_DATA;
+
 public class SelectCityActivity extends AppCompatActivity {
 
     private static final String TAG = "SelectCityActivity";
@@ -33,15 +41,31 @@ public class SelectCityActivity extends AppCompatActivity {
     private List<SelectCityItem> mList = new ArrayList<SelectCityItem>();
     private SelectCityAdapter mAdapter;
     public static final int REQUEST_CODE = 1;
+    private SharedPreferences mShared;
 
     //初始化itemTouchHelpCallBack对象
     private DefaultItemTouchHelpCallBack mHelpCallBack = new DefaultItemTouchHelpCallBack(new DefaultItemTouchHelpCallBack.OnItemTouchCallBackListener() {
         @Override
         public void onSwiped(int position) {
-            //判断position的位置是否是列表的最后一个
             if (mList != null && mList.size() > 0) {
                 //删除数据  更新ui
-                Log.d(TAG, "onSwiped: " + position);
+                //判断删除数据库还是SharedPreference里的数据
+                SelectCityItem selectCityItem = mList.get(position);
+                DataSupport.deleteAll(SelectCityWeatherData.class, "cityName = ?", selectCityItem.getCityName());
+                Weather weather = null;
+                if (mShared != null) {
+                    String string = mShared.getString(WEATHER_DATA, null);
+                    if (string != null) {
+                        weather = DataUtil.handleWeatherData(string);
+                    }
+                }
+                if (weather != null && weather.getBasic() != null) {
+                    if (weather.getBasic().getCity().equals(selectCityItem.getCityName())) {
+                        //如果相等的话 删除
+                        mShared.edit().putString(WEATHER_DATA, null).apply();
+                    }
+                }
+                Log.d(TAG, "onSwiped: " + position + " city name " + selectCityItem.getCityName());
                 mList.remove(position);
                 mAdapter.notifyItemRemoved(position);
             }
@@ -49,8 +73,7 @@ public class SelectCityActivity extends AppCompatActivity {
 
         @Override
         public boolean onMove(int srcPosition, int targetPosition) {
-            if (mList != null && mList.size() > 0){
-                //更新ui变化 列表变化除去最后一列变化
+            if (mList != null && mList.size() > 0) {
                 Log.d(TAG, "onMove: " + "src position " + srcPosition + "target " + targetPosition);
                 Collections.swap(mList, srcPosition, targetPosition);
                 mAdapter.notifyItemMoved(srcPosition, targetPosition);
@@ -72,14 +95,42 @@ public class SelectCityActivity extends AppCompatActivity {
         SelectCityItem last = new SelectCityItem();
         last.setLast(true);
         mList.add(last);
+        //添加从主界面选出的城市
         mRecycle.setLayoutManager(linearLayoutManager);
         mAdapter = new SelectCityAdapter(mList);
+        addWeatherFromMainActivity();
+        addWeatherFromSQLite();
         mRecycle.setAdapter(mAdapter);
         //设置recycleView的拖拽和滑动删除事件
         mHelpCallBack.setLongPressDragEnabled(true);
         mHelpCallBack.setSwipeEnabled(true);
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(mHelpCallBack);
         itemTouchHelper.attachToRecyclerView(mRecycle);
+    }
+
+    //添加从MainActivity中选中的城市
+    private void addWeatherFromMainActivity() {
+        mShared = PreferenceManager.getDefaultSharedPreferences(SelectCityActivity.this);
+        String string = mShared.getString(WEATHER_DATA, null);
+        add(string);
+        //并且从数据库中读取选择过的城市天气信息
+    }
+
+    //添加数据库中的选中的天气信息
+    private void addWeatherFromSQLite() {
+        List<SelectCityWeatherData> weatherDataList = DataSupport.findAll(SelectCityWeatherData.class);
+        for (SelectCityWeatherData data : weatherDataList) {
+            add(data.getWeatherData());
+        }
+    }
+
+    private void add(String string) {
+        if (string != null && string.length() > 0) {
+            //解析生成weather对象
+            Weather weather = DataUtil.handleWeatherData(string);
+            SelectCityItem selectCityItem = getSelectCityItem(weather);
+            addToList(selectCityItem);
+        }
     }
 
     private void initBackupGround() {
@@ -102,29 +153,21 @@ public class SelectCityActivity extends AppCompatActivity {
 
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
-                    final SelectCityItem selectCityItem = new SelectCityItem();
                     String string = response.body().string();
+                    //将选择的天气信息存储到数据库中持久化
+                    SelectCityWeatherData weatherData = new SelectCityWeatherData();
+                    weatherData.setWeatherData(string);
                     Weather weather = DataUtil.handleWeatherData(string);
-                    String nowTime = getNowTime();
-                    if (weather != null) {
-                        String cityName = weather.getBasic().getCity();
-                        String tmp = weather.getNow().getTmp();
-                        selectCityItem.setCityName(cityName);
-                        selectCityItem.setTem(tmp + SelectCityActivity.this.getResources().getString(R.string.tem));
-                        selectCityItem.setTime(nowTime);
+                    if (weather != null && weather.getBasic() != null) {
+                        weatherData.setCityName(weather.getBasic().getCity());
                     }
+                    weatherData.save();
+                    final SelectCityItem selectCityItem = getSelectCityItem(weather);
                     SelectCityActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             //防止重复添加
-                            if (mList.size() > 1) {
-                                forceAddAgain(selectCityItem);
-                            }
-                            mList.add(mList.size() - 1, selectCityItem);
-                            mAdapter.notifyItemInserted(mList.size() - 2);
-                            //mAdapter.notifyDataSetChanged();
-                            //将recycle定位到最后一行
-                            mRecycle.scrollToPosition(mList.size() - 1);
+                            addToList(selectCityItem);
 
                         }
                     });
@@ -132,6 +175,31 @@ public class SelectCityActivity extends AppCompatActivity {
             });
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void addToList(SelectCityItem selectCityItem) {
+        if (mList.size() > 1) {
+            forceAddAgain(selectCityItem);
+        }
+        mList.add(mList.size() - 1, selectCityItem);
+        mAdapter.notifyItemInserted(mList.size() - 2);
+        //mAdapter.notifyDataSetChanged();
+        //将recycle定位到最后一行
+        mRecycle.scrollToPosition(mList.size() - 1);
+    }
+
+    @NonNull
+    private SelectCityItem getSelectCityItem(Weather weather) {
+        final SelectCityItem selectCityItem = new SelectCityItem();
+        String nowTime = getNowTime();
+        if (weather != null) {
+            String cityName = weather.getBasic().getCity();
+            String tmp = weather.getNow().getTmp();
+            selectCityItem.setCityName(cityName);
+            selectCityItem.setTem(tmp + SelectCityActivity.this.getResources().getString(R.string.tem));
+            selectCityItem.setTime(nowTime);
+        }
+        return selectCityItem;
     }
 
     //防止重复添加
@@ -167,5 +235,12 @@ public class SelectCityActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+    }
+
+    @Override
+    public void onBackPressed() {
+        //重写了返回事件  当删除列表城市信息的时候 只能通过点击事件跳转
+        //do nothing ....
+        super.onBackPressed();
     }
 }
