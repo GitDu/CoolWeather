@@ -68,6 +68,7 @@ public class SelectCityActivity extends AppCompatActivity {
                 Log.d(TAG, "onSwiped: " + position + " city name " + selectCityItem.getCityName());
                 mList.remove(position);
                 mAdapter.notifyItemRemoved(position);
+                //重新更新显示列表的顺序
             }
         }
 
@@ -241,6 +242,5 @@ public class SelectCityActivity extends AppCompatActivity {
     public void onBackPressed() {
         //重写了返回事件  当删除列表城市信息的时候 只能通过点击事件跳转
         //do nothing ....
-        super.onBackPressed();
     }
 }

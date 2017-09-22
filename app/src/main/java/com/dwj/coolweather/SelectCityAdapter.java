@@ -3,6 +3,7 @@ package com.dwj.coolweather;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,11 +21,12 @@ import static com.dwj.coolweather.SelectCityActivity.REQUEST_CODE;
  * Created by duWenJun on 17-9-9.
  */
 
-public class SelectCityAdapter extends RecyclerView.Adapter<SelectCityAdapter.ViewHolder>{
+public class SelectCityAdapter extends RecyclerView.Adapter<SelectCityAdapter.ViewHolder> {
 
     private static final String TAG = "SelectCityAdapter";
-    private List<SelectCityItem> lists;
+    private List<SelectCityItem> mLists;
     private Context mContext;
+
     class ViewHolder extends RecyclerView.ViewHolder {
 
         private final TextView mShow_time;
@@ -32,6 +34,7 @@ public class SelectCityAdapter extends RecyclerView.Adapter<SelectCityAdapter.Vi
         private final TextView mShow_tem;
         private final ImageView mSelect;
         private final View view;
+
         ViewHolder(View view) {
             super(view);
             this.view = view;
@@ -43,7 +46,7 @@ public class SelectCityAdapter extends RecyclerView.Adapter<SelectCityAdapter.Vi
     }
 
     public SelectCityAdapter(List<SelectCityItem> lists) {
-        this.lists = lists;
+        this.mLists = lists;
     }
 
     @Override
@@ -56,8 +59,8 @@ public class SelectCityAdapter extends RecyclerView.Adapter<SelectCityAdapter.Vi
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, final int position) {
-        SelectCityItem selectCityItem = lists.get(position);
+    public void onBindViewHolder(final ViewHolder holder, final int position) {
+        SelectCityItem selectCityItem = mLists.get(position);
         if (selectCityItem.isLast()) {
             holder.mSelect.setVisibility(View.VISIBLE);
             holder.mShow_tem.setVisibility(View.GONE);
@@ -78,7 +81,9 @@ public class SelectCityAdapter extends RecyclerView.Adapter<SelectCityAdapter.Vi
             holder.view.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Toast.makeText(mContext, " item position is " + position, Toast.LENGTH_SHORT).show();
+                    //不用更新Adapter的列表数据 通过动态的获取holder的对应的adapter位置
+                    //拿到变化之后的数据表对应的数据,获得正确的点击项的名称
+                    Toast.makeText(mContext, " item position is " + mLists.get(holder.getAdapterPosition()).getCityName(), Toast.LENGTH_SHORT).show();
                 }
             });
         }
@@ -86,7 +91,7 @@ public class SelectCityAdapter extends RecyclerView.Adapter<SelectCityAdapter.Vi
 
     @Override
     public int getItemCount() {
-        return lists.size();
+        return mLists.size();
     }
 
 }
