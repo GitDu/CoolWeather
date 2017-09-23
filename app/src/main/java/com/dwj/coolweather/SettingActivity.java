@@ -26,6 +26,7 @@ public class SettingActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setting);
+        ActivityController.addActivity(SettingActivity.this);
         initView();
     }
 
@@ -132,6 +133,7 @@ public class SettingActivity extends AppCompatActivity {
         mAlarm.unRegisterCallBack();
         mAbout.unRegisterCallBack();
         mVersion_up.unRegisterCallBack();
+        ActivityController.removeActivity(SettingActivity.this);
         super.onDestroy();
     }
 }

@@ -88,6 +88,7 @@ public class SelectCityActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_city);
+        ActivityController.addActivity(SelectCityActivity.this);
         ToolUtil.fitStatusBar(SelectCityActivity.this);
         initBackupGround();
         mRecycle = ((RecyclerView) findViewById(R.id.select_city_list));
@@ -219,12 +220,16 @@ public class SelectCityActivity extends AppCompatActivity {
     private void forceAddAgain(SelectCityItem item) {
         //如果有相等的 先删掉里面的 在添加最新的信息
         //不能在遍历的时候删除数据 recycle正确删除方式
+        Log.d(TAG, "forceAddAgain: " + mList.size());
         for (int i = 0; i < mList.size(); i++) {
-            if (item.getCityName().equals(mList.get(i).getCityName())) {
-                mAdapter.notifyItemRemoved(i);
-                mList.remove(i);
-                mAdapter.notifyItemRangeRemoved(0, mAdapter.getItemCount());
-                break;
+            Log.d(TAG, "forceAddAgain: " + item.getCityName());
+            if (item.getCityName() != null) {
+                if (item.getCityName().equals(mList.get(i).getCityName())) {
+                    mAdapter.notifyItemRemoved(i);
+                    mList.remove(i);
+                    mAdapter.notifyItemRangeRemoved(0, mAdapter.getItemCount());
+                    break;
+                }
             }
         }
     }
@@ -254,5 +259,11 @@ public class SelectCityActivity extends AppCompatActivity {
     public void onBackPressed() {
         //重写了返回事件  当删除列表城市信息的时候 只能通过点击事件跳转
         //do nothing ....
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        ActivityController.removeActivity(SelectCityActivity.this);
     }
 }

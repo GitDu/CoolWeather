@@ -103,8 +103,8 @@ public class AreaFragment extends Fragment {
             mQuit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    ((WeatherActivity) mContext).finish();
                     ((WeatherActivity) mContext).getDrawLayout().closeDrawer(GravityCompat.START);
+                    ActivityController.finishAll();
                 }
             });
         }

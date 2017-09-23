@@ -12,9 +12,13 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
+import com.blankj.utilcode.util.ConvertUtils;
 import com.dwj.coolweather.db.SelectCityWeatherData;
 import com.dwj.coolweather.util.DataUtil;
 import com.dwj.coolweather.util.ToolUtil;
@@ -34,23 +38,25 @@ public class WeatherActivity extends AppCompatActivity {
 
     private static final String TAG = "WeatherActivity";
     private DrawerLayout mDraw;
-    private String mChooseCity;
     private List<WeatherFragment> mFragments = new ArrayList<WeatherFragment>();
     private List<String> mCityStrings = new ArrayList<String>();
     private int index = -1;
     private ViewPager mContain;
     private MyAdapter mAdapter;
     private SharedPreferences mShared;
+    private LinearLayout mWeatherIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_weather);
         Log.d(TAG, "onCreate: ");
+        ActivityController.addActivity(WeatherActivity.this);
         mDraw = ((DrawerLayout) findViewById(R.id.draw_layout));
         mContain = ((ViewPager) findViewById(R.id.pager_container));
         mAdapter = new MyAdapter(getSupportFragmentManager(), mFragments);
         ImageView choose = (ImageView) findViewById(R.id.choose_weathers);
+        mWeatherIndex = ((LinearLayout) findViewById(R.id.weather_index));
         choose.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -59,10 +65,64 @@ public class WeatherActivity extends AppCompatActivity {
             }
         });
         mContain.setAdapter(mAdapter);
+        mContain.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                Log.d(TAG, "onPageScrolled: ------------------");
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                //滑动的过程中动态设置圆点的位置
+                Log.d(TAG, "onPageSelected: ++++++++++");
+                int childCount = mWeatherIndex.getChildCount();
+                for (int i = 0; i < childCount; i++) {
+                    ImageView childAt = (ImageView) mWeatherIndex.getChildAt(i);
+                    if (i == position) {
+                        childAt.setImageResource(R.drawable.gray_shape);
+                    } else {
+                        childAt.setImageResource(R.drawable.while_shape);
+                    }
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                Log.d(TAG, "onPageScrollStateChanged: ");
+            }
+        });
         ToolUtil.fitStatusBar(WeatherActivity.this);
         mShared = PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this);
         initData();
+        initDotViews();
 
+    }
+
+    private void initDotViews() {
+        //数据初始化之后 根据数据的多少添加引导圈的个数
+        float indexWidth = 8;
+        mWeatherIndex.removeAllViews();
+        for (int i = 0; i < mFragments.size(); i++) {
+            Log.d(TAG, "onResume: add");
+            ImageView imageView = new ImageView(WeatherActivity.this);
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            layoutParams.gravity = Gravity.CENTER;
+            if (i != (mFragments.size() - 1)) {
+                //设置间隔
+                layoutParams.rightMargin = ConvertUtils.dp2px(indexWidth);
+            }
+
+            if (i == index) {
+                //选中的设置为灰色
+                imageView.setImageResource(R.drawable.gray_shape);
+            } else {
+                //没有选中的设置成白色
+                imageView.setImageResource(R.drawable.while_shape);
+            }
+            imageView.setLayoutParams(layoutParams);
+            mWeatherIndex.addView(imageView);
+        }
     }
 
     private void initData() {
@@ -70,12 +130,13 @@ public class WeatherActivity extends AppCompatActivity {
         mFragments.clear();
         String urlString = null;
         String dataString = null;
+        String chooseCity = null;
         ArrayList<String> cityList;
         if (getIntent().getBooleanExtra(FROM_SELECT_ACTIVITY, false)) {
             //从选择城市列表页跳转过来
             Log.d(TAG, "initData: " + "from selectActivity");
             //跳转的时候直接选中点击的城市页
-            mChooseCity = getIntent().getStringExtra(CHOSE_CITY);
+            chooseCity = getIntent().getStringExtra(CHOSE_CITY);
             cityList = getIntent().getStringArrayListExtra(CITY_LIST);
             //获得存储的天气数据
             Log.d(TAG, "initData: " + cityList.size());
@@ -98,7 +159,7 @@ public class WeatherActivity extends AppCompatActivity {
                         mFragments.add(WeatherFragment.newInstance(urlString, dataString));
                     }
                 }
-                index = mCityStrings.indexOf(mChooseCity);
+                index = mCityStrings.indexOf(chooseCity);
             }
         } else {
             //从主页边跳转过来,默认选择的是sharedPreference里的城市项
@@ -157,6 +218,7 @@ public class WeatherActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        ActivityController.removeActivity(WeatherActivity.this);
     }
 
     private static class MyAdapter extends FragmentStatePagerAdapter {

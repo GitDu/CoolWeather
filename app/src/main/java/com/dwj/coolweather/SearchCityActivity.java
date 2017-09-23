@@ -58,6 +58,7 @@ public class SearchCityActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search_city);
+        ActivityController.addActivity(SearchCityActivity.this);
         mEdit = ((DeleteEditText) findViewById(R.id.edit));
         mTextView = ((TextView) findViewById(R.id.cancel_action));
         mList = ((ListView) findViewById(R.id.data_list));
@@ -172,5 +173,6 @@ public class SearchCityActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         mEdit.unRegisterCallBack();
+        ActivityController.removeActivity(SearchCityActivity.this);
     }
 }
