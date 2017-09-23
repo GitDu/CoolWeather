@@ -43,6 +43,7 @@
                 android:drawableStart="@drawable/search"
                 android:gravity="center_vertical"
                 android:hint="@string/search_city"
+                android:text="南"
                 android:maxLines="1"
                 android:padding="5dp"
                 android:textSize="20sp" />

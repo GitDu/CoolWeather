@@ -6,13 +6,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.graphics.Palette;
@@ -66,7 +64,8 @@ public class WeatherFragment extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String TAG = "WeatherFragment";
 
-    private static final String WEATHER_URL = "weatherUrl";
+    private static final String URL = "weatherUrl";
+    private static final String DATA = "weatherData";
 
     private TextView mCountyName;
     private TextView mUpdateDate;
@@ -93,6 +92,7 @@ public class WeatherFragment extends Fragment {
     boolean isBegin = true;
     private String mWeatherUrl;
     private View mView;
+    private String mWeatherData;
 
     public WeatherFragment() {
         // Required empty public constructor
@@ -102,14 +102,16 @@ public class WeatherFragment extends Fragment {
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param param1 Parameter 1.
+     * @param weatherUrl  Parameter 1.
+     * @param weatherData Parameter 2.
      * @return A new instance of fragment WeatherFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static WeatherFragment newInstance(String param1) {
+    public static WeatherFragment newInstance(String weatherUrl, String weatherData) {
         WeatherFragment fragment = new WeatherFragment();
         Bundle args = new Bundle();
-        args.putString(WEATHER_URL, param1);
+        args.putString(URL, weatherUrl);
+        args.putString(DATA, weatherData);
         fragment.setArguments(args);
         return fragment;
     }
@@ -119,7 +121,10 @@ public class WeatherFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mWeatherUrl = getArguments().getString(WEATHER_URL);
+            mWeatherUrl = getArguments().getString(URL);
+            mWeatherData = getArguments().getString(DATA);
+            Log.d(TAG, "onCreate: data " + mWeatherData);
+            Log.d(TAG, "onCreate: url " + mWeatherUrl);
         }
     }
 
@@ -158,13 +163,6 @@ public class WeatherFragment extends Fragment {
         mSwap = ((SwipeRefreshLayout) mView.findViewById(R.id.swipe_layout));
         mSwap.setColorSchemeColors(getResources().getColor(R.color.colorPrimary));
         mFooter = ((RelativeLayout) mView.findViewById(R.id.footer));
-        ImageView choose = (ImageView) mView.findViewById(R.id.choose_weathers);
-        choose.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(mContext, SelectCityActivity.class));
-            }
-        });
         RecyclerView recyclerView = ((RecyclerView) mView.findViewById(R.id.hourly_forecast));
         //设置横向的小时预测结果
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(mContext);
@@ -195,26 +193,17 @@ public class WeatherFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         if (mContext instanceof WeatherActivity) {
-            WeatherActivity activity = (WeatherActivity) this.mContext;
             //注册Activity的监听
-            activity.registerListener(new WeatherActivity.updateWeatherUrlListener() {
-                @Override
-                public void callBackup(String string) {
-                    mWeatherUrl = string;
-                    initData();
-                }
-            });
         }
     }
 
     private void initData() {
-        String string = mDefaultPreferences.getString(WEATHER_DATA, null);
-        if (string == null || string.length() == 0) {
+        if (mWeatherData == null || mWeatherData.length() == 0) {
             //更新的时候直接再次初始化这个控件
             queryDataFromService();
         } else {
             //直接解析生成weather对象
-            Weather weather = DataUtil.handleWeatherData(string);
+            Weather weather = DataUtil.handleWeatherData(mWeatherData);
             updateData(weather);
 
         }

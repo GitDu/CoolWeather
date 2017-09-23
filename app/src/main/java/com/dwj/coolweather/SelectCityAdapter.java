@@ -9,12 +9,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.dwj.coolweather.bean.SelectCityItem;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import static com.dwj.coolweather.Contacts.CHOSE_CITY;
+import static com.dwj.coolweather.Contacts.CITY_LIST;
+import static com.dwj.coolweather.Contacts.FROM_SELECT_ACTIVITY;
 import static com.dwj.coolweather.SelectCityActivity.REQUEST_CODE;
 
 /**
@@ -25,6 +28,7 @@ public class SelectCityAdapter extends RecyclerView.Adapter<SelectCityAdapter.Vi
 
     private static final String TAG = "SelectCityAdapter";
     private List<SelectCityItem> mLists;
+    private ArrayList<String> mCityList = new ArrayList<String>();
     private Context mContext;
 
     class ViewHolder extends RecyclerView.ViewHolder {
@@ -83,7 +87,18 @@ public class SelectCityAdapter extends RecyclerView.Adapter<SelectCityAdapter.Vi
                 public void onClick(View view) {
                     //不用更新Adapter的列表数据 通过动态的获取holder的对应的adapter位置
                     //拿到变化之后的数据表对应的数据,获得正确的点击项的名称
-                    Toast.makeText(mContext, " item position is " + mLists.get(holder.getAdapterPosition()).getCityName(), Toast.LENGTH_SHORT).show();
+                    mCityList.clear();
+                    for (SelectCityItem list : mLists) {
+                        mCityList.add(list.getCityName());
+                        Log.d(TAG, "SelectCityAdapter: " + list.getCityName());
+                    }
+                    Intent intent = new Intent(mContext, WeatherActivity.class);
+                    intent.putExtra(CHOSE_CITY, mLists.get(holder.getAdapterPosition()).getCityName());
+                    intent.putStringArrayListExtra(CITY_LIST, mCityList);
+                    intent.putExtra(FROM_SELECT_ACTIVITY, true);
+                    if (mContext instanceof SelectCityActivity) {
+                        ((SelectCityActivity) mContext).startActivity(intent);
+                    }
                 }
             });
         }

@@ -2,79 +2,125 @@ package com.dwj.coolweather;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.graphics.Palette;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import com.blankj.utilcode.util.TimeUtils;
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.FutureTarget;
-import com.bumptech.glide.request.target.Target;
-import com.dwj.coolweather.db.County;
-import com.dwj.coolweather.gson.Weather;
+import com.dwj.coolweather.db.SelectCityWeatherData;
 import com.dwj.coolweather.util.DataUtil;
-import com.dwj.coolweather.util.HttpUtil;
 import com.dwj.coolweather.util.ToolUtil;
 
 import org.litepal.crud.DataSupport;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Random;
-import java.util.concurrent.ExecutionException;
 
-import okhttp3.Call;
-import okhttp3.Response;
-
-import static com.dwj.coolweather.Contacts.BING;
-import static com.dwj.coolweather.Contacts.BING_ICON;
-import static com.dwj.coolweather.Contacts.LAST_COUNTY_NAME;
+import static com.dwj.coolweather.Contacts.CHOSE_CITY;
+import static com.dwj.coolweather.Contacts.CITY_LIST;
+import static com.dwj.coolweather.Contacts.FROM_SELECT_ACTIVITY;
 import static com.dwj.coolweather.Contacts.WEATHER_DATA;
+import static com.dwj.coolweather.Contacts.WEATHER_URL;
 
 public class WeatherActivity extends AppCompatActivity {
 
     private static final String TAG = "WeatherActivity";
-    private String mWeatherUrl;
     private DrawerLayout mDraw;
-    private updateWeatherUrlListener mListener;
+    private String mChooseCity;
+    private List<WeatherFragment> mFragments = new ArrayList<WeatherFragment>();
+    private List<String> mCityStrings = new ArrayList<String>();
+    private int index = -1;
+    private ViewPager mContain;
+    private MyAdapter mAdapter;
+    private SharedPreferences mShared;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_weather);
         Log.d(TAG, "onCreate: ");
-        mWeatherUrl = getIntent().getStringExtra("weatherUrl");
         mDraw = ((DrawerLayout) findViewById(R.id.draw_layout));
+        mContain = ((ViewPager) findViewById(R.id.pager_container));
+        mAdapter = new MyAdapter(getSupportFragmentManager(), mFragments);
+        ImageView choose = (ImageView) findViewById(R.id.choose_weathers);
+        choose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(WeatherActivity.this, SelectCityActivity.class));
+                (WeatherActivity.this).finish();
+            }
+        });
+        mContain.setAdapter(mAdapter);
         ToolUtil.fitStatusBar(WeatherActivity.this);
+        mShared = PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this);
+        initData();
 
-        FragmentManager supportFragmentManager = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = supportFragmentManager.beginTransaction();
-        WeatherFragment weatherFragment = WeatherFragment.newInstance(mWeatherUrl);
-        fragmentTransaction.replace(R.id.container, weatherFragment).commit();
+    }
+
+    private void initData() {
+        //判断是否是从选择页过来的
+        mFragments.clear();
+        String urlString = null;
+        String dataString = null;
+        ArrayList<String> cityList;
+        if (getIntent().getBooleanExtra(FROM_SELECT_ACTIVITY, false)) {
+            //从选择城市列表页跳转过来
+            Log.d(TAG, "initData: " + "from selectActivity");
+            //跳转的时候直接选中点击的城市页
+            mChooseCity = getIntent().getStringExtra(CHOSE_CITY);
+            cityList = getIntent().getStringArrayListExtra(CITY_LIST);
+            //获得存储的天气数据
+            Log.d(TAG, "initData: " + cityList.size());
+            if (cityList.size() > 0) {
+                for (String s : cityList) {
+                    Log.d(TAG, "initData: " + s);
+                    if (s != null) {
+                        mCityStrings.add(s);
+                        //SelectCityWeatherData 查询这个数据库的地址和天气信息 数据只有在数据库中或SharedPreferences中
+                        List<SelectCityWeatherData> weatherDataList = DataSupport.where("cityName = ?", s).find(SelectCityWeatherData.class);
+                        if (weatherDataList != null && weatherDataList.size() > 0) {
+                            urlString = weatherDataList.get(0).getWeatherUrl();
+                            dataString = weatherDataList.get(0).getWeatherData();
+                        } else {
+                            SharedPreferences shared = PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this);
+                            dataString = shared.getString(WEATHER_DATA, null);
+                            urlString = DataUtil.getWeatherUrlPath(WeatherActivity.this);
+                        }
+                        //初始化保存fragment的容器
+                        mFragments.add(WeatherFragment.newInstance(urlString, dataString));
+                    }
+                }
+                index = mCityStrings.indexOf(mChooseCity);
+            }
+        } else {
+            //从主页边跳转过来,默认选择的是sharedPreference里的城市项
+            Log.d(TAG, "initData: shared");
+            urlString = getIntent().getStringExtra(WEATHER_URL);
+            dataString = mShared.getString(WEATHER_DATA, null);
+            index = 0;
+            mFragments.add(WeatherFragment.newInstance(urlString, dataString));
+            //并且查询之前保存的数据库
+            List<SelectCityWeatherData> cityWeatherData = DataSupport.findAll(SelectCityWeatherData.class);
+            Log.d(TAG, "initData: " + cityWeatherData.size());
+            for (SelectCityWeatherData cityWeatherDatum : cityWeatherData) {
+                urlString = cityWeatherDatum.getWeatherUrl();
+                dataString = cityWeatherDatum.getWeatherData();
+                mFragments.add(WeatherFragment.newInstance(urlString, dataString));
+            }
+        }
+        mAdapter.notifyDataSetChanged();
+        //指定选择点击页
+        if (index != -1) {
+            mContain.setCurrentItem(index, true);
+        }
     }
 
     @Override
@@ -100,25 +146,35 @@ public class WeatherActivity extends AppCompatActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         setIntent(intent);
-        //从侧划页跳转过来
-        mWeatherUrl = getIntent().getStringExtra("weatherUrl");
-        mListener.callBackup(mWeatherUrl);
+        //从侧划页跳转过来 更新当前viewPager对应的页面 过来之前删掉了shared里的数据
+        //拿到当前的viewPager页
+        Log.d(TAG, "onNewIntent: " + index);
+//        String urlString = getIntent().getStringExtra(WEATHER_URL);
+//        mListener.callBackup(urlString);
         super.onNewIntent(intent);
-    }
-
-    public void registerListener(updateWeatherUrlListener listener) {
-        this.mListener = listener;
-    }
-
-    public interface updateWeatherUrlListener {
-        void callBackup(String string);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (mListener != null) {
-            mListener = null;
+    }
+
+    private static class MyAdapter extends FragmentStatePagerAdapter {
+        private List<WeatherFragment> mList;
+
+        public MyAdapter(FragmentManager fm, List<WeatherFragment> list) {
+            super(fm);
+            this.mList = list;
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return mList.get(position);
+        }
+
+        @Override
+        public int getCount() {
+            return mList.size();
         }
     }
 }

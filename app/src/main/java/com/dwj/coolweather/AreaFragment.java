@@ -39,6 +39,7 @@ import okhttp3.Response;
 
 import static com.dwj.coolweather.Contacts.LAST_COUNTY_NAME;
 import static com.dwj.coolweather.Contacts.WEATHER_DATA;
+import static com.dwj.coolweather.Contacts.WEATHER_URL;
 
 /**
  * Created by duWenJun on 17-9-2.
@@ -140,13 +141,14 @@ public class AreaFragment extends Fragment {
                          * 如果是附在weatherActivity上 则更新数据 不用再启动activity.
                          */
                         Intent intent = new Intent(mContext, WeatherActivity.class);
-                        intent.putExtra("weatherUrl", weatherUrl);
+                        intent.putExtra(WEATHER_URL, weatherUrl);
                         if (mContext instanceof WeatherActivity) {
                             mShare = PreferenceManager.getDefaultSharedPreferences(mContext);
                             String lastCounty = mShare.getString(LAST_COUNTY_NAME, null);
                             if (lastCounty != null && lastCounty.length() > 0 && !lastCounty.equals(selectCounty.getCountyName())) {
                                 mShare.edit().putString(WEATHER_DATA, null).apply();
                                 mContext.startActivity(intent);
+                                mContext.finish();
                             }
                             ((WeatherActivity) mContext).getDrawLayout().closeDrawer(GravityCompat.START);
                         } else if (mContext instanceof MainActivity) {

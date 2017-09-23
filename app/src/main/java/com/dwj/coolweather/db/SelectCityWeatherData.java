@@ -11,6 +11,15 @@ public class SelectCityWeatherData extends DataSupport {
     private int id;
     private String weatherData;
     private String cityName;
+    private String weatherUrl;
+
+    public String getWeatherUrl() {
+        return weatherUrl;
+    }
+
+    public void setWeatherUrl(String weatherUrl) {
+        this.weatherUrl = weatherUrl;
+    }
 
     public String getCityName() {
         return cityName;

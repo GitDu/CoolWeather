@@ -143,8 +143,8 @@ public class SelectCityActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, final Intent data) {
         if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
-            CountyForSearch county = (CountyForSearch) data.getParcelableExtra(SearchCityActivity.CITY_CODE);
-            String weatherUrl = "http://guolin.tech/api/weather?cityid=" +
+            final CountyForSearch county = (CountyForSearch) data.getParcelableExtra(SearchCityActivity.CITY_CODE);
+            final String weatherUrl = "http://guolin.tech/api/weather?cityid=" +
                     county.getWeatherId() + "&key=a51a0df067ff48fd98aa27b1324594e7";
             HttpUtil.handleHttpRequest(weatherUrl, new okhttp3.Callback() {
                 @Override
@@ -156,13 +156,25 @@ public class SelectCityActivity extends AppCompatActivity {
                 public void onResponse(Call call, Response response) throws IOException {
                     String string = response.body().string();
                     //将选择的天气信息存储到数据库中持久化
-                    SelectCityWeatherData weatherData = new SelectCityWeatherData();
-                    weatherData.setWeatherData(string);
-                    Weather weather = DataUtil.handleWeatherData(string);
-                    if (weather != null && weather.getBasic() != null) {
-                        weatherData.setCityName(weather.getBasic().getCity());
+                    //如果数据库中存在了 替换天气数据就可以了
+                    List<SelectCityWeatherData> dataList = DataSupport.select("cityName").find(SelectCityWeatherData.class);
+                    Log.d(TAG, "onResponse: name 1" + county.getCountyName());
+                    for (SelectCityWeatherData weatherData : dataList) {
+                        Log.d(TAG, "onResponse: sqlite name " + weatherData.getCityName());
+                        Log.d(TAG, "onResponse: whether is " + county.getCountyName().equals(weatherData.getCityName()));
+                        SelectCityWeatherData selectCityWeatherData = new SelectCityWeatherData();
+                        if (county.getCountyName().equals(weatherData.getCityName())) {
+                            //如果数据库中已经存在了这个城市信息,只需要更新天气信息
+                            selectCityWeatherData.setWeatherData(string);
+                            selectCityWeatherData.updateAll("cityName = ?", county.getCountyName());
+                        } else {
+                            selectCityWeatherData.setWeatherData(string);
+                            selectCityWeatherData.setWeatherUrl(weatherUrl);
+                            selectCityWeatherData.setCityName(county.getCountyName());
+                            selectCityWeatherData.save();
+                        }
                     }
-                    weatherData.save();
+                    Weather weather = DataUtil.handleWeatherData(string);
                     final SelectCityItem selectCityItem = getSelectCityItem(weather);
                     SelectCityActivity.this.runOnUiThread(new Runnable() {
                         @Override
