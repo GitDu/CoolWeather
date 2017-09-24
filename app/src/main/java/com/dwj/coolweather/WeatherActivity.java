@@ -102,6 +102,10 @@ public class WeatherActivity extends AppCompatActivity {
         //数据初始化之后 根据数据的多少添加引导圈的个数
         float indexWidth = 8;
         mWeatherIndex.removeAllViews();
+        if (mFragments.size() == 1) {
+            mWeatherIndex.setVisibility(View.GONE);
+            return;
+        }
         for (int i = 0; i < mFragments.size(); i++) {
             Log.d(TAG, "onResume: add");
             ImageView imageView = new ImageView(WeatherActivity.this);
