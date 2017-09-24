@@ -121,7 +121,9 @@ public class SelectCityActivity extends AppCompatActivity {
     //添加数据库中的选中的天气信息
     private void addWeatherFromSQLite() {
         List<SelectCityWeatherData> weatherDataList = DataSupport.findAll(SelectCityWeatherData.class);
+        Log.d(TAG, "addWeatherFromSQLite: " + weatherDataList.size());
         for (SelectCityWeatherData data : weatherDataList) {
+            Log.d(TAG, "addWeatherFromSQLite: " + data.getCityName());
             add(data.getWeatherData());
         }
     }
@@ -160,20 +162,28 @@ public class SelectCityActivity extends AppCompatActivity {
                     //如果数据库中存在了 替换天气数据就可以了
                     List<SelectCityWeatherData> dataList = DataSupport.select("cityName").find(SelectCityWeatherData.class);
                     Log.d(TAG, "onResponse: name 1" + county.getCountyName());
+                    boolean isInSQLite = false;
                     for (SelectCityWeatherData weatherData : dataList) {
                         Log.d(TAG, "onResponse: sqlite name " + weatherData.getCityName());
                         Log.d(TAG, "onResponse: whether is " + county.getCountyName().equals(weatherData.getCityName()));
-                        SelectCityWeatherData selectCityWeatherData = new SelectCityWeatherData();
                         if (county.getCountyName().equals(weatherData.getCityName())) {
                             //如果数据库中已经存在了这个城市信息,只需要更新天气信息
-                            selectCityWeatherData.setWeatherData(string);
-                            selectCityWeatherData.updateAll("cityName = ?", county.getCountyName());
+                            isInSQLite = true;
                         } else {
-                            selectCityWeatherData.setWeatherData(string);
-                            selectCityWeatherData.setWeatherUrl(weatherUrl);
-                            selectCityWeatherData.setCityName(county.getCountyName());
-                            selectCityWeatherData.save();
+                            isInSQLite = false;
                         }
+                    }
+                    SelectCityWeatherData selectCityWeatherData = new SelectCityWeatherData();
+                    if (isInSQLite) {
+                        Log.d(TAG, "onResponse: update data");
+                        selectCityWeatherData.setWeatherData(string);
+                        selectCityWeatherData.updateAll("cityName = ?", county.getCountyName());
+                    } else {
+                        Log.d(TAG, "onResponse: add");
+                        selectCityWeatherData.setWeatherData(string);
+                        selectCityWeatherData.setWeatherUrl(weatherUrl);
+                        selectCityWeatherData.setCityName(county.getCountyName());
+                        selectCityWeatherData.save();
                     }
                     Weather weather = DataUtil.handleWeatherData(string);
                     final SelectCityItem selectCityItem = getSelectCityItem(weather);

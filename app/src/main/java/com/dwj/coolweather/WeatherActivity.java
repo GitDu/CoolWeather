@@ -172,6 +172,7 @@ public class WeatherActivity extends AppCompatActivity {
             List<SelectCityWeatherData> cityWeatherData = DataSupport.findAll(SelectCityWeatherData.class);
             Log.d(TAG, "initData: " + cityWeatherData.size());
             for (SelectCityWeatherData cityWeatherDatum : cityWeatherData) {
+                Log.d(TAG, "initData: "  + cityWeatherDatum.getCityName());
                 urlString = cityWeatherDatum.getWeatherUrl();
                 dataString = cityWeatherDatum.getWeatherData();
                 mFragments.add(WeatherFragment.newInstance(urlString, dataString));
