@@ -32,5 +32,7 @@ public class ActivityController {
                 activity.finish();
             }
         }
+        //清除容器中的对象 防止内存泄漏
+        sActivityList.clear();
     }
 }

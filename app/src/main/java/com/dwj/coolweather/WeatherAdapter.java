@@ -12,6 +12,7 @@ import java.util.List;
 
 /**
  * Created by duWenJun on 17-9-6.
+ *
  */
 
 public class WeatherAdapter extends RecyclerView.Adapter<WeatherAdapter.MyHolder> {

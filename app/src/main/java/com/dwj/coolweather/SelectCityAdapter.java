@@ -77,6 +77,13 @@ public class SelectCityAdapter extends RecyclerView.Adapter<SelectCityAdapter.Vi
                     ((SelectCityActivity) mContext).startActivityForResult(new Intent(((SelectCityActivity) mContext), SearchCityActivity.class), REQUEST_CODE);
                 }
             });
+            holder.view.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    //如果点击的是外部的控件 退出app
+                    ActivityController.finishAll();
+                }
+            });
         } else {
             //如果不是最后一个 添加item的点击事件
             holder.mShow_city.setText(selectCityItem.getCityName());

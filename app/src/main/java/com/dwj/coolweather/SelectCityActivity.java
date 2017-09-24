@@ -69,6 +69,10 @@ public class SelectCityActivity extends AppCompatActivity {
                 mList.remove(position);
                 mAdapter.notifyItemRemoved(position);
                 //重新更新显示列表的顺序
+                if (mList.size() == 0) {
+                    //如果列表删光了 退出程序
+                    ActivityController.finishAll();
+                }
             }
         }
 
